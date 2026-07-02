@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  @keyframes wisGlow { 0%,100%{ transform:scale(1); opacity:.85 } 50%{ transform:scale(1.06); opacity:1 } }
+  @keyframes wisRing { 0%{ transform:scale(.9); opacity:.55 } 70%{ transform:scale(1.35); opacity:0 } 100%{ transform:scale(1.35); opacity:0 } }
+  @keyframes wisFloat { 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-8px) } }
+  @keyframes msgIn { 0%{ opacity:0; transform:translateY(8px) } 100%{ opacity:1; transform:translateY(0) } }
+  .wis-scroll::-webkit-scrollbar{ width:0; height:0 }
+</style>
+</helmet>
+<div style="width:375px;height:812px;position:relative;background:#FAFAFB;font-family:'Inter',system-ui,sans-serif;overflow:hidden;color:#000;border-radius:44px;">
+
+  <!-- status bar -->
+  <div style="position:absolute;top:0;left:0;right:0;height:52px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 8px;z-index:40;pointer-events:none;">
+    <div style="font-size:14px;font-weight:600;font-family:'IBM Plex Mono',monospace;">9:41</div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <div style="width:17px;height:11px;border:1.5px solid #000;border-radius:3px;position:relative;"><div style="position:absolute;inset:1.5px;width:9px;background:#000;border-radius:1px;"></div></div>
+    </div>
+  </div>
+
+  <!-- ============ HOME ============ -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <div class="wis-scroll" style="position:absolute;inset:0;overflow-y:auto;padding:60px 20px 108px;">
+    <div style="display:flex;justify-content:center;margin-bottom:6px;">
+      <div style="display:flex;gap:4px;background:#F0EFEF;border-radius:100px;padding:4px;">
+        <button onClick="{{ setOut }}" style="border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;padding:7px 16px;border-radius:100px;background:{{ outBg }};color:{{ outFg }};transition:.2s;">Fuori casa</button>
+        <button onClick="{{ setIn }}" style="border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;padding:7px 16px;border-radius:100px;background:{{ inBg }};color:{{ inFg }};transition:.2s;">In casa</button>
+      </div>
+    </div>
+
+    <div style="min-height:392px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 6px 0;">
+      <div style="position:relative;width:212px;height:212px;display:flex;align-items:center;justify-content:center;animation:wisFloat 5s ease-in-out infinite;">
+        <div style="position:absolute;width:210px;height:210px;border-radius:50%;background:radial-gradient(circle,#FFD3BF 0%,rgba(255,211,191,0) 68%);animation:wisGlow 4s ease-in-out infinite;"></div>
+        <div style="position:absolute;width:170px;height:170px;border-radius:50%;border:2px solid #F48457;animation:wisRing 3.2s ease-out infinite;"></div>
+        <div style="position:relative;width:176px;height:176px;border-radius:50%;background:#fff url('assets/wis-avatar.png') no-repeat center / 82%;box-shadow:0 20px 44px -14px rgba(232,78,15,.4), inset 0 0 0 1px #F0EFEF;"></div>
+      </div>
+      <div style="margin-top:26px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#F48457;">WIS · ora</div>
+      <sc-if value="{{ isIn }}" hint-placeholder-val="{{ true }}">
+        <p style="margin:12px 2px 0;font-size:18px;line-height:27px;font-weight:500;color:#1a1718;text-wrap:pretty;">Bentornato Andrea. Ho abbassato le tapparelle e acceso il riscaldamento, come fai di solito quando rientri la sera.</p>
+      </sc-if>
+      <sc-if value="{{ isOut }}" hint-placeholder-val="{{ false }}">
+        <p style="margin:12px 2px 0;font-size:18px;line-height:27px;font-weight:500;color:#1a1718;text-wrap:pretty;">Ciao Andrea. Sei fuori: tengo io la casa d'occhio, con calma. Nessun pensiero.</p>
+      </sc-if>
+      <div style="margin-top:22px;font-size:12px;color:#A4A3A4;display:flex;align-items:center;gap:6px;">scorri <span style="font-size:14px;">↓</span></div>
+    </div>
+
+    <sc-if value="{{ isOut }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border-radius:26px;padding:22px;box-shadow:0 6px 20px rgba(60,56,57,.06);border:1px solid #F0EFEF;">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px;">
+          <div style="width:26px;height:26px;border-radius:50%;background:#A8E4DD;display:flex;align-items:center;justify-content:center;color:#0B5C53;font-size:15px;font-weight:700;">✓</div>
+          <div style="font-size:15px;font-weight:600;color:#0B5C53;">Tutto in sicurezza</div>
+        </div>
+        <p style="margin:0;font-size:16px;line-height:24px;color:#3C3839;">Tutto chiuso e in sicurezza: porta, finestre, garage.</p>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid #F0EFEF;font-size:13px;color:#747272;">Ultima verifica: <span style="font-family:'IBM Plex Mono',monospace;color:#3C3839;">5 min fa</span></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isIn }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border-radius:26px;padding:22px;box-shadow:0 6px 20px rgba(60,56,57,.06);border:1px solid #F0EFEF;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#8B6B47;letter-spacing:.02em;">STANZA ATTUALE</div>
+            <div style="font-size:20px;font-weight:700;margin-top:3px;">Sei in salotto</div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:#1a1718;">21°</div>
+        </div>
+        <p style="margin:12px 0 0;font-size:15px;line-height:23px;color:#3C3839;">Luci soffuse, musica a volume medio.</p>
+        <button style="margin-top:16px;width:100%;border:none;cursor:pointer;font-family:inherit;background:#FFF6F2;color:#DB3700;font-size:14px;font-weight:600;padding:13px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:6px;">Regola <span>→</span></button>
+        <div style="margin-top:16px;font-size:12px;font-weight:600;color:#A4A3A4;margin-bottom:9px;">Altre stanze</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span style="font-size:13px;font-weight:600;padding:8px 14px;border-radius:100px;background:#D4F5F1;color:#0B5C53;">Cucina</span>
+          <span style="font-size:13px;font-weight:600;padding:8px 14px;border-radius:100px;background:#F5EEE3;color:#8B6B47;">Camera</span>
+          <span style="font-size:13px;font-weight:600;padding:8px 14px;border-radius:100px;background:#D4F0F7;color:#1B5E80;">Bagno</span>
+          <span style="font-size:13px;font-weight:600;padding:8px 14px;border-radius:100px;background:#F0E0FF;color:#5A1A80;">Studio</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="margin-top:14px;background:#F5F5F6;border-radius:26px;padding:20px;border:1px solid #EDECEC;">
+      <div style="font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#747272;margin-bottom:14px;">Quanto mi lasci fare</div>
+      <div style="display:flex;gap:11px;align-items:flex-start;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#0B5C53;margin-top:6px;flex-shrink:0;"></div>
+        <p style="margin:0;font-size:15px;line-height:22px;color:#3C3839;">Gestisco da solo: <strong style="font-weight:600;color:#1a1718;">luci, tapparelle.</strong></p>
+      </div>
+      <div style="display:flex;gap:11px;align-items:flex-start;margin-top:11px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#DB3700;margin-top:6px;flex-shrink:0;"></div>
+        <p style="margin:0;font-size:15px;line-height:22px;color:#3C3839;">Ti chiedo sempre conferma per: <strong style="font-weight:600;color:#1a1718;">sicurezza, elettrodomestici.</strong></p>
+      </div>
+      <button style="margin-top:16px;border:1px solid #E0DFDF;background:#fff;cursor:pointer;font-family:inherit;color:#3C3839;font-size:13px;font-weight:600;padding:10px 18px;border-radius:100px;display:inline-flex;align-items:center;gap:6px;">Regola <span>→</span></button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ NOTIFICATIONS ============ -->
+  <sc-if value="{{ isNotif }}" hint-placeholder-val="{{ false }}">
+  <div class="wis-scroll" style="position:absolute;inset:0;overflow-y:auto;padding:60px 20px 108px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h1 style="margin:0;font-size:24px;font-weight:700;">Notifiche</h1>
+      <button onClick="{{ goChat }}" style="border:none;cursor:pointer;padding:0;width:44px;height:44px;border-radius:50%;background:#fff url('assets/wis-avatar.png') no-repeat center / 84%;box-shadow:0 4px 12px rgba(232,78,15,.28),inset 0 0 0 2.5px #fff;position:relative;">
+        <span style="position:absolute;top:0;right:0;width:11px;height:11px;border-radius:50%;background:#F48457;border:2px solid #FAFAFB;"></span>
+      </button>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;color:#747272;margin:0 2px 10px;">Tutto sotto controllo</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 4px 14px rgba(60,56,57,.05);border:1px solid #F0EFEF;display:flex;gap:13px;align-items:flex-start;">
+        <div style="width:34px;height:34px;border-radius:50%;background:#D4F5F1;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#0B5C53;font-size:16px;">✓</div>
+        <div><p style="margin:0;font-size:15px;line-height:22px;color:#3C3839;">Ho controllato 12 volte stanotte: niente da segnalare.</p><div style="margin-top:6px;font-size:12px;color:#A4A3A4;font-family:'IBM Plex Mono',monospace;">07:02</div></div>
+      </div>
+      <div style="background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 4px 14px rgba(60,56,57,.05);border:1px solid #F0EFEF;display:flex;gap:13px;align-items:flex-start;">
+        <div style="width:34px;height:34px;border-radius:50%;background:#D4F0F7;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#1B5E80;font-size:16px;">✓</div>
+        <div><p style="margin:0;font-size:15px;line-height:22px;color:#3C3839;">C'è stato un breve sovraccarico questa mattina. Ho già sistemato tutto io.</p><div style="margin-top:6px;font-size:12px;color:#A4A3A4;font-family:'IBM Plex Mono',monospace;">08:40</div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:26px 2px 10px;">
+      <div style="font-size:13px;font-weight:600;color:#747272;">Richiede una tua decisione</div>
+      <sc-if value="{{ decisionResolved }}" hint-placeholder-val="{{ false }}"><button onClick="{{ resetDecision }}" style="border:none;background:none;cursor:pointer;font-family:inherit;font-size:12px;color:#A4A3A4;">↺ rivedi</button></sc-if>
+    </div>
+    <div style="background:#fff;border-radius:22px;padding:20px;box-shadow:0 6px 18px rgba(219,55,0,.07);border:1px solid #FFE0D2;">
+      <div style="display:flex;gap:13px;align-items:flex-start;">
+        <div style="width:34px;height:34px;border-radius:50%;background:#fff url('assets/wis-avatar.png') no-repeat center / 84%;flex-shrink:0;border:1px solid #F0EFEF;box-shadow:0 3px 8px rgba(232,78,15,.16);"></div>
+        <div style="flex:1;">
+          <sc-if value="{{ decisionPending }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:0;font-size:15px;line-height:22px;color:#1a1718;">Ancora io — il fornello è acceso da mezz'ora e in cucina non c'è nessuno. Vuoi che ti aiuti?</p>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+              <button onClick="{{ confirmStove }}" style="flex:1;border:none;cursor:pointer;font-family:inherit;background:#DB3700;color:#fff;font-size:14px;font-weight:600;padding:13px;border-radius:14px;">Sì, spegni</button>
+              <button onClick="{{ ignoreStove }}" style="flex:1;border:1px solid #E0DFDF;cursor:pointer;font-family:inherit;background:#fff;color:#3C3839;font-size:14px;font-weight:600;padding:13px;border-radius:14px;">Non ora</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ decisionDone }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;font-size:15px;line-height:22px;color:#0B5C53;font-weight:500;">Fatto, tranquillo.</p>
+          </sc-if>
+          <sc-if value="{{ decisionIgnored }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;font-size:15px;line-height:22px;color:#3C3839;font-weight:500;">Va bene, ci tengo d'occhio comunque.</p>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:26px 2px 10px;">
+      <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:#E30613;"><span style="width:8px;height:8px;border-radius:50%;background:#E30613;display:inline-block;"></span>Attenzione subito</div>
+      <button onClick="{{ replayEmergency }}" style="border:none;background:none;cursor:pointer;font-family:inherit;font-size:12px;color:#A4A3A4;">↺ rivedi</button>
+    </div>
+    <div style="background:#fff;border-radius:22px;padding:6px 20px 20px;border:1.5px solid #E30613;box-shadow:0 8px 26px -8px rgba(227,6,19,.28);">
+      <div style="display:flex;flex-direction:column;gap:14px;padding-top:16px;">
+        <div style="display:flex;gap:13px;align-items:flex-start;animation:msgIn .4s ease both;">
+          <div style="width:34px;height:34px;border-radius:50%;background:#fff url('assets/wis-avatar.png') no-repeat center / 84%;flex-shrink:0;border:1px solid #FFE0D2;box-shadow:0 3px 8px rgba(227,6,19,.14);"></div>
+          <div style="flex:1;">
+            <p style="margin:0;font-size:15px;line-height:22px;color:#1a1718;">Ho rilevato una perdita d'acqua nella casa di Maria. Sto chiudendo l'acqua adesso.</p>
+            <sc-if value="{{ emClosing }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:#E30613;font-weight:600;"><span style="width:14px;height:14px;border:2px solid #E30613;border-top-color:transparent;border-radius:50%;animation:wisGlow 1s linear infinite;display:inline-block;"></span>Chiusura in corso…</div>
+            </sc-if>
+          </div>
+        </div>
+        <sc-if value="{{ emDone }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:13px;align-items:flex-start;animation:msgIn .4s ease both;">
+            <div style="width:34px;height:34px;border-radius:50%;background:#A8E4DD;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#0B5C53;font-size:16px;">✓</div>
+            <p style="margin:0;font-size:15px;line-height:22px;color:#0B5C53;font-weight:500;flex:1;">Fatto, acqua chiusa. La situazione è sotto controllo.</p>
+          </div>
+        </sc-if>
+        <sc-if value="{{ emAsk }}" hint-placeholder-val="{{ false }}">
+          <div style="border-top:1px solid #F0EFEF;padding-top:16px;animation:msgIn .4s ease both;">
+            <p style="margin:0 0 14px;font-size:15px;line-height:22px;color:#1a1718;">Vuoi chiamare Maria per rassicurarla?</p>
+            <div style="display:flex;gap:10px;">
+              <button onClick="{{ callMaria }}" style="flex:1;border:none;cursor:pointer;font-family:inherit;background:#E30613;color:#fff;font-size:14px;font-weight:600;padding:13px;border-radius:14px;">Chiama Maria</button>
+              <button onClick="{{ dismissMaria }}" style="flex:1;border:1px solid #E0DFDF;cursor:pointer;font-family:inherit;background:#fff;color:#3C3839;font-size:14px;font-weight:600;padding:13px;border-radius:14px;">Va bene così</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ emCalled }}" hint-placeholder-val="{{ false }}">
+          <div style="border-top:1px solid #F0EFEF;padding-top:14px;font-size:15px;color:#0B5C53;font-weight:500;animation:msgIn .4s ease both;">Sto chiamando Maria…</div>
+        </sc-if>
+        <sc-if value="{{ emDismissed }}" hint-placeholder-val="{{ false }}">
+          <div style="border-top:1px solid #F0EFEF;padding-top:14px;font-size:15px;color:#3C3839;font-weight:500;animation:msgIn .4s ease both;">Va bene così. Resto io di guardia.</div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ VALUE ============ -->
+  <sc-if value="{{ isValue }}" hint-placeholder-val="{{ false }}">
+  <div class="wis-scroll" style="position:absolute;inset:0;overflow-y:auto;padding:60px 20px 108px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h1 style="margin:0;font-size:24px;font-weight:700;">Valore</h1>
+      <button onClick="{{ goChat }}" style="border:none;cursor:pointer;padding:0;width:44px;height:44px;border-radius:50%;background:#fff url('assets/wis-avatar.png') no-repeat center / 84%;box-shadow:0 4px 12px rgba(232,78,15,.28),inset 0 0 0 2.5px #fff;"></button>
+    </div>
+
+    <div style="background:#fff;border-radius:26px;padding:22px;box-shadow:0 6px 20px rgba(60,56,57,.06);border:1px solid #F0EFEF;">
+      <div style="display:flex;gap:13px;align-items:flex-start;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#fff url('assets/wis-avatar.png') no-repeat center / 84%;flex-shrink:0;box-shadow:inset 0 0 0 2.5px #fff,0 3px 10px rgba(232,78,15,.25);"></div>
+        <p style="margin:0;font-size:16px;line-height:24px;color:#1a1718;">Oggi abbiamo evitato uno spreco inutile. Il fornello spento in tempo vale circa <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:#DB3700;">0,30&nbsp;€</span> — e un rischio in meno.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:22px;font-size:13px;font-weight:600;color:#747272;margin-bottom:12px;padding-left:2px;">Questo mese, insieme</div>
+    <div style="background:#fff;border-radius:26px;padding:6px 22px;box-shadow:0 4px 16px rgba(60,56,57,.05);border:1px solid #F0EFEF;">
+      <div style="display:flex;align-items:baseline;gap:14px;padding:16px 0;border-bottom:1px solid #F2F1F1;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;color:#1a1718;min-width:78px;">12&nbsp;€</div>
+        <div style="font-size:15px;color:#3C3839;">liberati in bolletta</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:14px;padding:16px 0;border-bottom:1px solid #F2F1F1;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;color:#1a1718;min-width:78px;">4</div>
+        <div style="font-size:15px;color:#3C3839;">rischi evitati</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:14px;padding:16px 0;border-bottom:1px solid #F2F1F1;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;color:#1a1718;min-width:78px;">3</div>
+        <div style="font-size:15px;color:#3C3839;">task gestite mentre eri fuori</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:14px;padding:16px 0;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;color:#1a1718;min-width:78px;">6</div>
+        <div style="font-size:15px;color:#3C3839;">giorni di qualità dell'aria ottimale</div>
+      </div>
+    </div>
+
+    <button onClick="{{ toggleValue }}" style="margin-top:16px;width:100%;border:1px solid #E0DFDF;background:#fff;cursor:pointer;font-family:inherit;color:#3C3839;font-size:14px;font-weight:600;padding:15px 20px;border-radius:18px;display:flex;align-items:center;justify-content:space-between;">Come ci siamo arrivati <span style="transition:.25s;transform:rotate({{ valArrow }});display:inline-block;">→</span></button>
+    <sc-if value="{{ valExpanded }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
+        <div style="background:#FFF6F2;border-radius:20px;padding:18px 20px;border:1px solid #FFE0D2;animation:msgIn .35s ease both;">
+          <p style="margin:0;font-size:15px;line-height:22px;color:#3C3839;">Il fornello era rimasto acceso. Dopo la tua conferma l'ho spento: evitato uno spreco di gas.</p>
+        </div>
+        <div style="background:#EEF4B0;border-radius:20px;padding:18px 20px;border:1px solid #DCE894;animation:msgIn .45s ease both;">
+          <p style="margin:0;font-size:15px;line-height:22px;color:#3C3839;">Ho spostato la lavatrice in fascia conveniente: risparmiati circa <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:#4C5408;">8&nbsp;€</span> e <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:#4C5408;">0,6&nbsp;kWh</span>.</p>
+        </div>
+        <div style="background:#D4F0F7;border-radius:20px;padding:18px 20px;border:1px solid #A9DDEA;animation:msgIn .55s ease both;">
+          <p style="margin:0;font-size:15px;line-height:22px;color:#3C3839;">Ho chiuso la perdita d'acqua da Maria prima che diventasse un problema serio: danno evitato stimato <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:#1B5E80;">oltre 200&nbsp;€</span>.</p>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- ============ PROFILE ============ -->
+  <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+  <div class="wis-scroll" style="position:absolute;inset:0;overflow-y:auto;padding:60px 20px 108px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+      <h1 style="margin:0;font-size:24px;font-weight:700;">Profilo</h1>
+      <button onClick="{{ goChat }}" style="border:none;cursor:pointer;padding:0;width:44px;height:44px;border-radius:50%;background:#fff url('assets/wis-avatar.png') no-repeat center / 84%;box-shadow:0 4px 12px rgba(232,78,15,.28),inset 0 0 0 2.5px #fff;"></button>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;color:#747272;margin:0 2px 12px;">Persone in questa casa</div>
+    <div style="background:#fff;border-radius:22px;padding:6px 20px;box-shadow:0 4px 14px rgba(60,56,57,.05);border:1px solid #F0EFEF;">
+      <div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid #F2F1F1;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#F5EEE3;color:#8B6B47;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;">A</div>
+        <div style="font-size:16px;color:#1a1718;font-weight:500;">Andrea <span style="color:#A4A3A4;font-weight:400;">(tu)</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid #F2F1F1;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#D4F0F7;color:#1B5E80;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;">L</div>
+        <div style="font-size:16px;color:#1a1718;font-weight:500;">Lucia</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:15px 0;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#F0E0FF;color:#5A1A80;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;">M</div>
+        <div style="font-size:16px;color:#1a1718;font-weight:500;">Matteo</div>
+      </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;color:#747272;margin:26px 2px 12px;">Case</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button onClick="{{ setHouseMine }}" style="text-align:left;cursor:pointer;font-family:inherit;background:#fff;border:1.5px solid {{ mineBorder }};border-radius:20px;padding:17px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 14px rgba(60,56,57,.04);">
+        <span style="font-size:16px;font-weight:600;color:#1a1718;">Casa tua</span>
+        <span style="font-size:13px;font-weight:600;color:{{ mineTag }};">{{ mineLabel }}</span>
+      </button>
+      <button onClick="{{ setHouseMaria }}" style="text-align:left;cursor:pointer;font-family:inherit;background:#fff;border:1.5px solid {{ mariaBorder }};border-radius:20px;padding:17px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 14px rgba(60,56,57,.04);">
+        <span style="font-size:16px;font-weight:600;color:#1a1718;">Casa di Maria</span>
+        <span style="font-size:13px;font-weight:600;color:{{ mariaTag }};">{{ mariaLabel }}</span>
+      </button>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;color:#747272;margin:26px 2px 12px;">Quanto mi affidi</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 4px 14px rgba(60,56,57,.05);border:1px solid #F0EFEF;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="width:8px;height:8px;border-radius:50%;background:#E30613;"></span><span style="font-size:15px;font-weight:600;color:#1a1718;">Sicurezza</span></div>
+        <p style="margin:0;font-size:14px;line-height:21px;color:#747272;">Ti chiedo sempre conferma, anche per le piccole cose. Meglio essere prudenti.</p>
+      </div>
+      <div style="background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 4px 14px rgba(60,56,57,.05);border:1px solid #F0EFEF;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="width:8px;height:8px;border-radius:50%;background:#8B6B47;"></span><span style="font-size:15px;font-weight:600;color:#1a1718;">Comfort</span></div>
+        <p style="margin:0;font-size:14px;line-height:21px;color:#747272;">Gestisco io in base alle tue abitudini. Puoi sempre correggermi.</p>
+      </div>
+      <div style="background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 4px 14px rgba(60,56,57,.05);border:1px solid #F0EFEF;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="width:8px;height:8px;border-radius:50%;background:#4C5408;"></span><span style="font-size:15px;font-weight:600;color:#1a1718;">Risparmio energetico</span></div>
+        <p style="margin:0;font-size:14px;line-height:21px;color:#747272;">Ti segnalo quando noto qualcosa, ma l'iniziativa è sempre tua.</p>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <div style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;background:rgba(255,255,255,.55);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border:1px solid rgba(255,255,255,.7);border-radius:100px;padding:8px;box-shadow:0 10px 34px -8px rgba(60,56,57,.18), inset 0 1px 0 rgba(255,255,255,.6);z-index:50;">
+    <button onClick="{{ goHome }}" title="Home" style="border:none;cursor:pointer;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ navHomeBg }};color:{{ navHomeFg }};transition:.2s;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.3V20h14V9.3"/></svg>
+    </button>
+    <button onClick="{{ goNotif }}" title="Notifiche" style="border:none;cursor:pointer;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ navNotifBg }};color:{{ navNotifFg }};transition:.2s;position:relative;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 0 0-12 0c0 6.5-2.5 8.5-2.5 8.5h17S18 15 18 8.5"/><path d="M13.5 20.5a1.7 1.7 0 0 1-3 0"/></svg>
+      <sc-if value="{{ hasNavBadge }}" hint-placeholder-val="{{ true }}">
+        <span style="position:absolute;top:9px;right:11px;width:8px;height:8px;border-radius:50%;background:{{ navBadgeColor }};border:1.5px solid rgba(255,255,255,.9);"></span>
+      </sc-if>
+    </button>
+    <button onClick="{{ goValue }}" title="Valore" style="border:none;cursor:pointer;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ navValueBg }};color:{{ navValueFg }};transition:.2s;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.6l2.5 6.9 6.9 2.5-6.9 2.5L12 21.4l-2.5-6.9L2.6 12l6.9-2.5z"/></svg>
+    </button>
+    <button onClick="{{ goProfile }}" title="Profilo" style="border:none;cursor:pointer;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ navProfileBg }};color:{{ navProfileFg }};transition:.2s;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4 3.5-6 7.5-6s7.5 2 7.5 6"/></svg>
+    </button>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:375,&quot;height&quot;:812},&quot;initialTab&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;notif&quot;,&quot;value&quot;,&quot;profile&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { tab: null, ctx: 'in', decision: 'pending', emStep: 1, emChoice: null, valExpanded: false, house: 'mine' };
+
+  componentDidMount() { this.runEmergency(); }
+  componentWillUnmount() { clearTimeout(this._t); }
+
+  runEmergency() {
+    clearTimeout(this._t);
+    this._t = setTimeout(() => { if (this.state.emStep === 1) this.setState({ emStep: 2 }); }, 2800);
+  }
+
+  renderVals() {
+    const tab = this.state.tab || this.props.initialTab || 'home';
+    const on = '#fff', off = 'transparent', onFg = '#DB3700', offFg = '#747272';
+    const dec = this.state.decision;
+    const em = this.state.emStep, ch = this.state.emChoice;
+    const house = this.state.house;
+    const emergencyActive = !(ch === 'call' || ch === 'ok');
+    return {
+      isHome: tab === 'home', isNotif: tab === 'notif', isValue: tab === 'value', isProfile: tab === 'profile',
+      goHome: () => this.setState({ tab: 'home' }),
+      goNotif: () => this.setState({ tab: 'notif' }),
+      goValue: () => this.setState({ tab: 'value' }),
+      goProfile: () => this.setState({ tab: 'profile' }),
+      goChat: () => this.setState({ tab: 'home' }),
+      navHomeBg: tab === 'home' ? on : off, navHomeFg: tab === 'home' ? onFg : offFg,
+      navNotifBg: tab === 'notif' ? on : off, navNotifFg: tab === 'notif' ? onFg : offFg,
+      navValueBg: tab === 'value' ? on : off, navValueFg: tab === 'value' ? onFg : offFg,
+      navProfileBg: tab === 'profile' ? on : off, navProfileFg: tab === 'profile' ? onFg : offFg,
+      hasNavBadge: emergencyActive || dec === 'pending',
+      navBadgeColor: emergencyActive ? '#E30613' : '#DB3700',
+      isIn: this.state.ctx === 'in', isOut: this.state.ctx === 'out',
+      setIn: () => this.setState({ ctx: 'in' }), setOut: () => this.setState({ ctx: 'out' }),
+      inBg: this.state.ctx === 'in' ? '#fff' : 'transparent', inFg: this.state.ctx === 'in' ? '#1a1718' : '#747272',
+      outBg: this.state.ctx === 'out' ? '#fff' : 'transparent', outFg: this.state.ctx === 'out' ? '#1a1718' : '#747272',
+      decisionPending: dec === 'pending', decisionDone: dec === 'done', decisionIgnored: dec === 'ignored',
+      decisionResolved: dec !== 'pending',
+      confirmStove: () => this.setState({ decision: 'done' }),
+      ignoreStove: () => this.setState({ decision: 'ignored' }),
+      resetDecision: () => this.setState({ decision: 'pending' }),
+      emClosing: em === 1, emDone: em >= 2, emAsk: em >= 2 && !ch, emCalled: ch === 'call', emDismissed: ch === 'ok',
+      callMaria: () => this.setState({ emChoice: 'call' }),
+      dismissMaria: () => this.setState({ emChoice: 'ok' }),
+      replayEmergency: () => this.setState({ emStep: 1, emChoice: null }, () => this.runEmergency()),
+      valExpanded: this.state.valExpanded, valArrow: this.state.valExpanded ? '90deg' : '0deg',
+      toggleValue: () => this.setState({ valExpanded: !this.state.valExpanded }),
+      setHouseMine: () => this.setState({ house: 'mine' }),
+      setHouseMaria: () => this.setState({ house: 'maria' }),
+      mineBorder: house === 'mine' ? '#DB3700' : '#F0EFEF', mineTag: house === 'mine' ? '#DB3700' : '#A4A3A4',
+      mineLabel: house === 'mine' ? '✓ attiva' : 'passa qui',
+      mariaBorder: house === 'maria' ? '#DB3700' : '#F0EFEF', mariaTag: house === 'maria' ? '#DB3700' : '#A4A3A4',
+      mariaLabel: house === 'maria' ? '✓ attiva' : 'passa qui',
+    };
+  }
+}
+</script>
+</body>
+</html>
