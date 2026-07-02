@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#FAFAFA">
+<title>WIS — Prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Spline+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  :root{
+    --primary-1:#FFF6F2; --primary-2:#FFEEE6; --primary-3:#FFD3BF; --primary-4:#F48457; --primary-5:#E84E0F; --primary-6:#DB3700; --primary-7:#A32900;
+    --grey-1:#FAFAFA; --grey-2:#F5F5F6; --grey-3:#E9E8E8; --grey-4:#D7D5D6; --grey-5:#A4A3A4; --grey-6:#747272; --grey-7:#3C3839; --black:#000;
+    --beige-light:#F5EEE3; --beige-mid:#E8D9C4; --beige-dark:#8B6B47;
+    --blue-light:#D4F0F7; --blue-mid:#A9DDEA; --blue-dark:#1B5E80;
+    --lime-light:#EEF4B0; --lime-mid:#DCE894; --lime-dark:#4C5408;
+    --purple-light:#F0E0FF; --purple-mid:#E0C2F2; --purple-dark:#5A1A80;
+    --teal-light:#D4F5F1; --teal-mid:#A8E4DD; --teal-dark:#0B5C53;
+    --success-bg:#A8E4DD; --success-fg:#0B5C53;
+    --warning-bg:#FFD3BF; --warning-fg:#A32900;
+    --error-bg:#F2C4BE; --error-fg:#7A2A1C;
+    --gewiss-red:#E30613;
+    --text-primary:#1a1718; --text-secondary:#747272; --text-disabled:#A4A3A4;
+    --bg-surface:#FAFAFA; --bg-card:#F5F5F6; --border-default:#E9E8E8;
+  }
+  *{box-sizing:border-box;}
+  html,body{ height:100%; }
+  body{
+    margin:0; min-height:100dvh; display:flex; align-items:center; justify-content:center;
+    background:#EAE9E9; font-family:'Inter',system-ui,sans-serif;
+    padding:40px 20px; overflow:hidden;
+  }
+  @keyframes wisGlow { 0%,100%{ transform:scale(1); opacity:.85 } 50%{ transform:scale(1.06); opacity:1 } }
+  @keyframes wisRing { 0%{ transform:scale(.9); opacity:.55 } 70%{ transform:scale(1.35); opacity:0 } 100%{ transform:scale(1.35); opacity:0 } }
+  @keyframes wisFloat { 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-8px) } }
+  @keyframes msgIn { 0%{ opacity:0; transform:translateY(8px) } 100%{ opacity:1; transform:translateY(0) } }
+
+  .device{
+    width:375px; height:812px; position:relative; background:#000; border-radius:54px;
+    padding:12px; box-shadow:0 30px 60px -20px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.04);
+  }
+  .device-inner{
+    width:100%; height:100%; border-radius:44px; overflow:hidden; position:relative; background:var(--bg-surface);
+  }
+  .notch{
+    position:absolute; top:12px; left:50%; transform:translateX(-50%); width:120px; height:28px;
+    background:#000; border-radius:20px; z-index:50;
+  }
+  .home-indicator{
+    position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:144px; height:5px;
+    background:#000; border-radius:100px; z-index:60; pointer-events:none;
+  }
+  .status-bar{
+    position:absolute; top:0; left:0; right:0; height:54px; display:flex; align-items:center; justify-content:space-between;
+    padding:21px 24px 19px; z-index:40; pointer-events:none; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;
+  }
+  .status-time{ font-size:17px; font-weight:600; line-height:22px; color:#000; }
+  .status-icons{ display:flex; gap:7px; align-items:center; }
+  .status-icons img{ display:block; }
+
+  .screen{ display:none; position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:64px 20px 108px; scrollbar-width:none; }
+  .screen::-webkit-scrollbar{ width:0; height:0; }
+  .screen.active{ display:block; }
+
+  /* ---------- iPhone reale: schermo intero, niente cornice finta, safe-area ---------- */
+  @media (max-width:480px), (pointer:coarse) and (max-width:950px){
+    body{ padding:0; overflow:visible; background:var(--bg-surface); align-items:stretch; }
+    .device{
+      width:100vw; height:100dvh; border-radius:0; padding:0; box-shadow:none; background:var(--bg-surface);
+    }
+    .device-inner{ border-radius:0; }
+    .notch{ display:none; }
+    .home-indicator{ display:none; }
+    .status-bar{ display:none; }
+    .screen{ padding:calc(20px + env(safe-area-inset-top)) 20px calc(104px + env(safe-area-inset-bottom)); }
+    .bottom-nav{ bottom:calc(16px + env(safe-area-inset-bottom)); }
+  }
+
+  .section-avatar{ position:relative; display:flex; justify-content:center; margin-bottom:24px; }
+  .suggestion-chip{
+    position:absolute; top:-8px; left:50%; transform:translateX(-50%); z-index:6; cursor:pointer;
+    background:#fff; color:var(--text-primary); font-size:12.5px; font-weight:700;
+    padding:8px 14px; border-radius:100px; white-space:nowrap; display:flex; align-items:center; gap:6px;
+    box-shadow:0 8px 18px rgba(60,56,57,.16);
+  }
+  .suggestion-chip iconify-icon{ color:var(--primary-6); }
+
+  .avatar-sm{
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    background:#fff url('assets/Avatar WIS_Gewiss_new.png') no-repeat center / 84%;
+    border:1px solid var(--border-default); box-shadow:0 3px 8px rgba(232,78,15,.16);
+  }
+  .avatar-sm.on-emergency{ border-color:#FFE0D2; box-shadow:0 3px 8px rgba(227,6,19,.14); }
+
+  .card{ background:#fff; border-radius:26px; padding:22px; box-shadow:0 6px 20px rgba(60,56,57,.06); border:1px solid var(--border-default); }
+  .card-sm{ background:#fff; border-radius:22px; padding:18px 20px; box-shadow:0 4px 14px rgba(60,56,57,.05); border:1px solid var(--border-default); }
+  .data{ font-family:'IBM Plex Mono',monospace; }
+
+  /* ---------- HOME ---------- */
+  .home-header-row{ display:flex; align-items:center; justify-content:center; margin-bottom:0; }
+  .home-house-picker{ position:relative; }
+  .home-house-btn{ border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:9px; background:#F0EFEF; color:var(--grey-7); font-family:inherit; font-size:14px; font-weight:600; padding:12px 20px 12px 18px; border-radius:100px; transition:.2s; }
+  .home-house-menu{
+    position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); z-index:10;
+    background:#fff; border-radius:16px; padding:6px; min-width:200px;
+    box-shadow:0 12px 30px -8px rgba(60,56,57,.24); border:1px solid var(--border-default);
+  }
+  .home-house-menu-item{
+    width:100%; border:none; background:none; cursor:pointer; font-family:inherit; text-align:left;
+    display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:11px;
+    font-size:13.5px; font-weight:600; color:var(--text-primary);
+  }
+  .home-house-menu-item:hover{ background:var(--bg-card); }
+  .home-house-menu-item iconify-icon{ color:var(--primary-6); flex-shrink:0; }
+
+  .hero{ min-height:280px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:8px 6px 0; }
+  .hero-avatar-wrap{ position:relative; width:212px; height:212px; display:flex; flex-direction:column; align-items:center; justify-content:center; transform:translateY(16px); }
+  .hero-floating{ position:relative; width:144px; display:flex; align-items:center; justify-content:center; animation:wisFloat 5s ease-in-out infinite; }
+  .hero-glow{ position:absolute; width:210px; height:210px; border-radius:50%; background:radial-gradient(circle,var(--primary-3) 0%,rgba(255,211,191,0) 68%); animation:wisGlow 4s ease-in-out infinite; }
+  .hero-ring{ position:absolute; width:170px; height:170px; border-radius:50%; border:2px solid var(--primary-4); animation:wisRing 3.2s ease-out infinite; }
+  .hero-head{ position:relative; width:100%; height:auto; display:block; filter:drop-shadow(0 16px 30px rgba(232,78,15,.4)); }
+  .hero-base{ width:144px; height:auto; display:block; filter:drop-shadow(0 10px 14px rgba(60,56,57,.18)); }
+
+  /* ---------- HOME SPEECH BUBBLE ---------- */
+  .home-speech-bubble{
+    position:absolute; top:-22px; left:50%; transform:translateX(-50%); z-index:6;
+    background:#fff; color:var(--text-primary); font-size:13px; font-weight:700;
+    padding:9px 15px; border-radius:16px; white-space:nowrap;
+    box-shadow:0 10px 22px rgba(60,56,57,.16);
+  }
+  .dark-info-card{
+    position:relative; width:100%; background:linear-gradient(180deg, #E7511F -20%, #0F0F0F 38%); border-radius:30px;
+    padding:22px 20px 20px; text-align:left; box-shadow:0 24px 40px -20px rgba(0,0,0,.55);
+  }
+  .dark-info-eyebrow{ font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.5); }
+  .wis-speech{ margin:6px 0 0; font-size:16px; line-height:23px; font-weight:500; color:rgba(255,255,255,.95); }
+  .dark-info-divider{ height:1px; background:rgba(255,255,255,.12); margin:16px 0 14px; }
+  .mini-actions-card{ width:100%; display:flex; flex-direction:column; gap:14px; text-align:left; }
+  .mini-action-row{ display:flex; align-items:center; gap:12px; font-size:14px; color:rgba(255,255,255,.65); }
+  .mini-action-icon{ width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:rgba(255,255,255,.08); color:rgba(255,255,255,.65); }
+  .mini-action-row.is-featured{ color:rgba(255,255,255,.95); font-weight:500; }
+  .mini-action-row.is-featured .mini-action-icon{ background:var(--primary-6); color:#fff; }
+  .mini-action-check{ margin-left:auto; color:var(--primary-4); flex-shrink:0; }
+
+
+
+  /* ---------- NOTIFICATIONS ---------- */
+  .section-label{ font-size:13px; font-weight:600; color:var(--text-secondary); }
+  .section-head{ display:flex; align-items:center; justify-content:space-between; margin:26px 2px 10px; }
+  .section-head:first-of-type{ margin-top:0; }
+  .link-btn{ border:none; background:none; cursor:pointer; font-family:inherit; font-size:12px; color:var(--text-disabled); display:inline-flex; align-items:center; gap:4px; }
+  iconify-icon{ vertical-align:middle; flex-shrink:0; }
+  .ok-row{ display:flex; gap:13px; align-items:flex-start; }
+  .ok-icon{ width:34px; height:34px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .ok-text{ margin:0; font-size:15px; line-height:22px; color:var(--grey-7); }
+  .ok-time{ margin-top:6px; font-size:12px; color:var(--text-disabled); }
+
+  .decision-card{ background:#fff; border-radius:22px; padding:20px; box-shadow:0 6px 18px rgba(219,55,0,.07); border:1px solid #FFE0D2; }
+
+
+  .challenge-card{ display:flex; align-items:center; justify-content:space-between; gap:12px; border-radius:22px; padding:18px; margin-bottom:12px; background:#fff; border:1px solid var(--border-default); box-shadow:0 4px 14px rgba(60,56,57,.05); }
+  .challenge-card-title{ font-size:15px; font-weight:700; color:var(--text-primary); margin:0 0 12px; }
+  .challenge-card-btn{ display:inline-flex; align-items:center; border:none; cursor:pointer; font-family:inherit; color:#fff; font-size:13px; font-weight:700; padding:8px 18px; border-radius:100px; }
+  .challenge-card-meta{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); margin-bottom:12px; }
+  .challenge-card-icon{ width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+  .impact-list{ display:flex; flex-direction:column; gap:12px; }
+  .impact-card{
+    display:flex; flex-wrap:wrap; align-items:center; gap:14px; background:#fff; border-radius:18px; padding:14px 16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.07), 0 1px 1.5px rgba(0,0,0,.04); cursor:pointer;
+  }
+  .impact-icon{ width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .impact-body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .impact-label{ font-size:10px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; }
+  .impact-title{ font-size:15px; font-weight:700; color:#1c1c1e; letter-spacing:-.15px; }
+  .impact-desc{ margin:1px 0 0; font-size:12px; line-height:16.8px; color:#6d6d72; }
+  .impact-side{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; flex-shrink:0; }
+  .impact-badge{ font-size:11px; font-weight:600; padding:3px 10px; border-radius:40px; white-space:nowrap; background:#E8F5E9; color:#2E7D32; }
+  .impact-stat-label{ font-size:10px; color:#6d6d72; text-align:right; }
+  .impact-stat-value{ display:flex; align-items:baseline; gap:4px; }
+  .impact-number{ font-size:20px; font-weight:700; letter-spacing:-.6px; }
+  .impact-unit{ font-size:11px; color:#6d6d72; white-space:nowrap; }
+  /* ---------- IMPACT DETAIL SCREEN ---------- */
+  .impact-detail-overlay{
+    position:absolute; inset:0; z-index:400; background:var(--bg-surface);
+    transform:translateX(100%); transition:transform .32s cubic-bezier(.32,.72,.35,1);
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .impact-detail-overlay.open{ transform:translateX(0); }
+  .impact-detail-inner{ padding:64px 16px 108px; display:flex; flex-direction:column; gap:12px; }
+  #detail-full-content{ display:flex; flex-direction:column; animation:msgIn .35s ease both; }
+  #detail-list-view{ animation:msgIn .3s ease both; }
+  .impact-detail-back{ position:absolute; top:20px; left:16px; width:38px; height:38px; border-radius:50%; border:none; cursor:pointer; background:#fff; box-shadow:0 4px 12px rgba(60,56,57,.1); display:flex; align-items:center; justify-content:center; color:var(--grey-7); z-index:1; }
+
+  /* ---------- MAP ZOOM OVERLAY ---------- */
+  .map-zoom-overlay{
+    position:absolute; inset:0; z-index:650; background:rgba(12,11,10,.94);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+    opacity:0; pointer-events:none; transition:opacity .3s ease;
+  }
+  .map-zoom-overlay.open{ opacity:1; pointer-events:auto; }
+  .map-zoom-title{ position:absolute; top:24px; left:20px; color:#fff; font-size:15px; font-weight:700; z-index:1; }
+  .map-zoom-close{ position:absolute; top:18px; right:16px; width:38px; height:38px; border-radius:50%; border:none; cursor:pointer; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,.3); display:flex; align-items:center; justify-content:center; color:var(--grey-7); z-index:1; }
+  .map-zoom-content{ position:relative; width:100%; border-radius:24px; overflow:hidden; transform:scale(.82); opacity:0; transition:transform .35s cubic-bezier(.32,.72,.35,1), opacity .3s ease; }
+  .map-zoom-overlay.open .map-zoom-content{ transform:scale(1); opacity:1; }
+  .map-zoom-content img{ width:100%; height:auto; display:block; }
+  .map-zoom-chips{ position:absolute; inset:0; }
+  .map-room-chip{
+    position:absolute; transform:translate(-50%,-50%); background:#fff; color:var(--text-primary);
+    font-size:11.5px; font-weight:700; padding:6px 12px; border-radius:100px; white-space:nowrap;
+    box-shadow:0 4px 10px rgba(0,0,0,.22); cursor:pointer; z-index:2;
+  }
+  .map-clickable{ cursor:pointer; }
+
+  /* ---------- ROOM DETAIL OVERLAY ---------- */
+  .room-detail-overlay{
+    position:absolute; inset:0; z-index:700; background:var(--bg-surface);
+    transform:translateY(100%); transition:transform .35s cubic-bezier(.32,.72,.35,1);
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .room-detail-overlay.open{ transform:translateY(0); }
+  .room-detail-photo{ position:relative; width:100%; height:280px; overflow:hidden; background:var(--bg-card); }
+  .room-detail-photo img{ width:100%; height:100%; object-fit:cover; object-position:50% 42%; display:block; }
+  .room-detail-photo::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(0,0,0,.42) 100%); pointer-events:none; }
+  .room-detail-back{ position:absolute; top:20px; left:16px; width:38px; height:38px; border-radius:50%; border:none; cursor:pointer; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; color:var(--grey-7); z-index:2; }
+  .room-detail-close{ position:absolute; top:20px; right:16px; width:38px; height:38px; border-radius:50%; border:none; cursor:pointer; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; color:var(--grey-7); z-index:2; }
+  .icon-x{ position:relative; width:15px; height:15px; flex-shrink:0; }
+  .icon-x::before, .icon-x::after{ content:''; position:absolute; top:50%; left:0; width:100%; height:2px; background:currentColor; border-radius:2px; }
+  .icon-x::before{ transform:rotate(45deg); }
+  .icon-x::after{ transform:rotate(-45deg); }
+  .room-detail-photo-label{ position:absolute; bottom:16px; left:20px; color:#fff; font-size:23px; font-weight:800; z-index:1; }
+  .room-detail-body{ padding:20px 20px 108px; }
+  .room-detail-header-row{ display:flex; justify-content:space-between; align-items:center; }
+  .room-detail-eyebrow{ font-size:11.5px; font-weight:800; letter-spacing:.08em; color:var(--primary-6); }
+  .room-detail-active-badge{ display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--border-default); font-size:12px; font-weight:700; color:var(--text-primary); padding:7px 12px; border-radius:100px; }
+  .room-detail-active-badge .dot{ width:7px; height:7px; border-radius:50%; background:var(--teal-dark); display:inline-block; }
+  .room-detail-hint{ margin:10px 0 16px; font-size:13px; color:var(--grey-7); }
+  .room-detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .room-device-card{ position:relative; cursor:pointer; border-radius:20px; padding:16px; background:#fff; border:1px solid var(--border-default); transition:.2s; }
+  .room-device-card.on{ background:linear-gradient(135deg, var(--primary-6) 0%, var(--primary-4) 100%); border-color:transparent; box-shadow:0 8px 20px -8px rgba(163,41,0,.35); }
+  .room-device-icon{ width:38px; height:38px; border-radius:12px; background:var(--bg-card); color:var(--grey-7); display:flex; align-items:center; justify-content:center; }
+  .room-device-card.on .room-device-icon{ background:rgba(255,255,255,.22); color:#fff; }
+  .room-device-toggle{ position:absolute; top:16px; right:16px; width:38px; height:22px; border-radius:100px; background:var(--grey-3); display:flex; align-items:center; padding:2px; transition:.2s; }
+  .room-device-card.on .room-device-toggle{ background:rgba(255,255,255,.35); justify-content:flex-end; }
+  .room-device-toggle-knob{ width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+  .room-device-name{ margin:14px 0 0; font-size:14.5px; font-weight:700; color:var(--text-primary); }
+  .room-device-card.on .room-device-name{ color:#fff; }
+  .room-device-meta{ margin:3px 0 0; font-size:11.5px; color:var(--grey-7); }
+  .room-device-card.on .room-device-meta{ color:rgba(255,255,255,.85); }
+
+  /* ---------- HOME MAP CARD ---------- */
+  .home-map-card{ background:#fff; border-radius:26px; overflow:hidden; cursor:pointer; box-shadow:0 10px 28px -6px rgba(60,56,57,.14); border:1px solid var(--border-default); }
+  .home-map-card-body{ padding:18px 18px 14px; }
+  .home-map-card-title{ margin:0; font-size:20px; font-weight:800; color:#111; letter-spacing:-.2px; }
+  .home-map-card-sub{ margin:6px 0 0; font-size:13px; line-height:19px; color:var(--grey-7); }
+  .home-map-card-photo{ position:relative; width:100%; height:170px; overflow:hidden; background:var(--bg-card); }
+  .home-map-card-photo img{
+    width:100%; height:100%; object-fit:cover; object-position:50% 32%; display:block;
+  }
+  .home-map-pills{ position:absolute; left:10px; right:10px; bottom:10px; display:flex; gap:6px; z-index:2; }
+  .home-map-pill{ flex:1; min-width:0; display:flex; align-items:center; gap:5px; background:#fff; border:1.5px solid var(--primary-3); border-radius:100px; padding:7px 8px; box-shadow:0 4px 10px rgba(0,0,0,.18); }
+  .home-map-pill iconify-icon{ color:var(--primary-6); flex-shrink:0; }
+  .home-map-pill-text{ min-width:0; overflow:hidden; }
+  .home-map-pill-label{ font-size:10.5px; font-weight:700; color:var(--text-primary); line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .home-map-pill-value{ font-size:9px; color:var(--grey-7); line-height:1.15; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* ---------- CAMERAS CARD ---------- */
+  .cameras-card{ background:#fff; border-radius:26px; padding:18px; margin-top:14px; box-shadow:0 6px 20px rgba(60,56,57,.06); border:1px solid var(--border-default); }
+  .cameras-card-header{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .cameras-card-icon{ width:38px; height:38px; border-radius:12px; background:var(--primary-2); color:var(--primary-6); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .cameras-card-title{ flex:1; margin:0; font-size:19px; font-weight:800; color:#111; letter-spacing:-.2px; }
+  .cameras-online-badge{ background:var(--primary-2); color:var(--primary-7); font-size:11px; font-weight:700; padding:7px 12px; border-radius:100px; white-space:nowrap; }
+  .cameras-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .cameras-thumb{ border-radius:18px; overflow:hidden; }
+  .cameras-thumb img{ width:100%; height:auto; display:block; }
+  .detail-card{ background:#fff; border-radius:20px; box-shadow:0 1px 3px rgba(0,0,0,.06); padding:18px; }
+  .detail-head-row{ display:flex; gap:14px; align-items:center; }
+  .detail-icon{ width:60px; height:60px; border-radius:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .detail-head-body{ flex:1; min-width:0; }
+  .detail-label-row{ display:flex; align-items:center; gap:8px; }
+  .detail-label{ font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .detail-title{ font-size:18px; font-weight:700; color:#1c1c1e; letter-spacing:-.02em; margin-top:4px; }
+  .detail-desc{ font-size:12px; color:#6d6d72; margin-top:3px; }
+  .detail-status-row{ display:flex; align-items:center; gap:6px; padding:7px 12px; border-radius:10px; margin-top:12px; }
+  .detail-status-dot{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .detail-status-text{ font-size:12px; font-weight:600; }
+  .detail-status-goals{ margin-left:auto; font-size:11px; opacity:.7; }
+  .detail-milestones{ margin-top:10px; }
+  .detail-milestone{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); }
+  .detail-milestone:last-child{ border-bottom:none; }
+  .detail-milestone-mark{ width:16px; height:16px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .detail-milestone-mark.done{ color:#2e7d32; }
+  .detail-milestone-mark.pending{ border:1.5px solid #e5e5ea; }
+  .detail-milestone-text{ font-size:13px; color:#1c1c1e; }
+  .detail-milestone.pending .detail-milestone-text{ color:#6d6d72; }
+  .detail-stats-label{ font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:#6d6d72; }
+  .detail-stats-row{ display:flex; margin-top:12px; }
+  .detail-stat-col{ flex:1; text-align:center; border-right:1px solid rgba(0,0,0,.08); padding:0 4px; }
+  .detail-stat-col:last-child{ border-right:none; }
+  .detail-stat-value{ font-size:20px; font-weight:700; letter-spacing:-.02em; }
+  .detail-stat-label{ font-size:10px; color:#6d6d72; margin-top:3px; }
+  .detail-tips-title-row{ display:flex; align-items:center; gap:8px; }
+  .detail-tips-title{ font-size:14px; font-weight:700; color:#1c1c1e; }
+  .detail-tip{ display:flex; gap:10px; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.08); }
+  .detail-tip:last-child{ border-bottom:none; }
+  .detail-tip-dot{ width:5px; height:5px; border-radius:50%; margin-top:7px; flex-shrink:0; }
+  .detail-tip-text{ font-size:13px; line-height:20px; color:#3a3a3c; }
+  .detail-btn-secondary{ border:1.5px solid #e5e5ea; background:#fff; cursor:pointer; font-family:inherit; color:#3a3a3c; font-size:15px; font-weight:600; padding:15px; border-radius:16px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .detail-btn-secondary.has-avatar{ padding:10px 15px; }
+  .detail-btn-secondary.has-avatar span{ flex:1; text-align:center; }
+  .mini-wis-float{ width:32px; flex-shrink:0; animation:wisFloat 5s ease-in-out infinite; }
+  .mini-wis-float img{ width:100%; height:auto; display:block; filter:drop-shadow(0 3px 6px rgba(232,78,15,.3)); }
+  .decision-text{ margin:0; font-size:15px; line-height:22px; color:var(--text-primary); }
+
+  /* ---------- RIEPILOGO CARD ---------- */
+  .riepilogo-card{
+    position:relative; overflow:hidden; border-radius:26px; padding:18px;
+    background:linear-gradient(135deg, var(--primary-6) 0%, var(--primary-5) 55%, var(--primary-4) 100%);
+    box-shadow:0 10px 26px -10px rgba(163,41,0,.4); border:none;
+  }
+  .riepilogo-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .riepilogo-title{ font-size:20px; font-weight:800; color:#fff; letter-spacing:-.2px; }
+  .riepilogo-badge-stack{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; }
+  .riepilogo-badge{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; padding:6px 10px; border-radius:100px; white-space:nowrap; flex-shrink:0; background:#fff; color:var(--primary-7); }
+  .riepilogo-sub{ font-size:13px; color:rgba(255,255,255,.85); margin-top:12px; }
+  .riepilogo-amount{ font-size:46px; font-weight:800; color:#fff; margin-top:2px; letter-spacing:-.02em; }
+  .riepilogo-note{ font-size:12.5px; color:rgba(255,255,255,.85); margin-top:4px; display:flex; align-items:center; gap:5px; }
+  .riepilogo-note iconify-icon{ color:#fff; }
+  .riepilogo-divider{ height:1px; background:rgba(255,255,255,.25); margin:16px 0 14px; }
+  .riepilogo-pills{ display:flex; gap:6px; }
+  .riepilogo-pill{ flex:1; min-width:0; display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.16); border:1.5px solid rgba(255,255,255,.3); border-radius:100px; padding:7px 10px 7px 6px; }
+  .riepilogo-pill-icon{ width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:rgba(255,255,255,.25); color:#fff; }
+  .riepilogo-pill-text{ min-width:0; display:flex; flex-direction:column; line-height:1.2; }
+  .riepilogo-pill-label{ font-size:10px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .riepilogo-pill-value{ font-size:11px; font-weight:600; color:rgba(255,255,255,.85); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .decision-actions{ display:flex; gap:10px; margin-top:16px; }
+  .btn-primary{ flex:1; border:none; cursor:pointer; font-family:inherit; background:var(--primary-6); color:#fff; font-size:14px; font-weight:600; padding:13px; border-radius:14px; }
+  .btn-secondary{ flex:1; border:1px solid var(--grey-4); cursor:pointer; font-family:inherit; background:#fff; color:var(--grey-7); font-size:14px; font-weight:600; padding:13px; border-radius:14px; }
+  .resolved-text{ margin:0; font-size:15px; line-height:22px; font-weight:500; }
+
+  .emergency-head{ display:flex; align-items:center; gap:7px; font-size:13px; font-weight:700; color:var(--gewiss-red); }
+  .emergency-dot{ width:8px; height:8px; border-radius:50%; background:var(--gewiss-red); display:inline-block; }
+  .emergency-card{ background:#fff; border-radius:22px; padding:6px 20px 20px; border:1.5px solid var(--gewiss-red); box-shadow:0 8px 26px -8px rgba(227,6,19,.28); transition:border-color .3s ease, box-shadow .3s ease; }
+  .emergency-card.is-resolved{ border-color:var(--teal-dark); box-shadow:0 8px 26px -8px rgba(11,92,83,.28); }
+  .emergency-steps{ display:flex; flex-direction:column; gap:14px; padding-top:16px; }
+  .em-step{ display:flex; gap:13px; align-items:flex-start; animation:msgIn .4s ease both; }
+  .em-divider{ border-top:1px solid var(--border-default); padding-top:16px; animation:msgIn .4s ease both; }
+  .em-divider.em-solo{ border-top:none; padding-top:0; }
+
+  /* ---------- VALUE ---------- */
+
+  /* ---------- PROFILE ---------- */
+  .profile-header{ position:relative; text-align:center; margin-bottom:18px; }
+  .profile-header h1{ margin:0; font-size:17px; font-weight:700; color:var(--text-primary); }
+  .profile-header p{ margin:4px 0 0; font-size:12.5px; color:var(--text-secondary); }
+
+  .profile-user-card{ background:#fff; border-radius:22px; padding:16px 18px; display:flex; align-items:center; gap:14px; box-shadow:0 4px 14px rgba(60,56,57,.05); border:1px solid var(--border-default); margin-bottom:14px; }
+  .profile-user-avatar{ width:50px; height:50px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+  .profile-user-info{ flex:1; min-width:0; }
+  .profile-user-name{ font-size:15.5px; font-weight:700; color:var(--text-primary); }
+  .profile-user-email{ font-size:12px; color:var(--text-secondary); margin-top:2px; }
+  .profile-edit-btn{ border:1px solid var(--border-default); background:#fff; border-radius:100px; padding:8px 14px; font-size:12px; font-weight:600; color:var(--text-primary); display:inline-flex; align-items:center; gap:6px; cursor:pointer; flex-shrink:0; font-family:inherit; }
+
+  .profile-section-card{ background:#fff; border-radius:22px; padding:18px; box-shadow:0 4px 14px rgba(60,56,57,.05); border:1px solid var(--border-default); margin-bottom:14px; }
+  .profile-section-title{ font-size:15px; font-weight:700; color:var(--text-primary); }
+  .profile-section-desc{ font-size:12px; color:var(--text-secondary); margin:3px 0 14px; line-height:17px; }
+
+  .house-scroll{ display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; margin:0 -18px; padding:0 18px 2px; }
+  .house-scroll::-webkit-scrollbar{ display:none; }
+  .house-card-v2{ flex-shrink:0; width:120px; background:var(--bg-card); border:1.5px solid transparent; border-radius:16px; padding:12px; cursor:pointer; text-align:left; font-family:inherit; }
+  .house-card-v2.active{ background:var(--primary-1); border-color:var(--primary-6); }
+  .house-card-v2-icon{ width:30px; height:30px; border-radius:9px; background:#fff; display:flex; align-items:center; justify-content:center; color:var(--primary-6); margin-bottom:8px; }
+  .house-card-v2-name{ font-size:13px; font-weight:700; color:var(--text-primary); }
+  .house-card-v2-addr{ font-size:10.5px; color:var(--text-secondary); margin-top:2px; line-height:14px; }
+  .house-card-v2-tag{ margin-top:8px; font-size:10.5px; font-weight:700; color:var(--primary-6); display:flex; align-items:center; gap:3px; }
+
+  .profile-user-row{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #F2F1F1; }
+  .profile-user-row:last-child{ border-bottom:none; }
+  .profile-user-row-avatar{ width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+  .profile-user-row-info{ flex:1; min-width:0; }
+  .profile-user-row-name{ font-size:14px; font-weight:600; color:var(--text-primary); }
+  .profile-user-row-name span{ font-weight:400; color:var(--text-disabled); }
+  .profile-user-row-email{ font-size:11.5px; color:var(--text-secondary); margin-top:1px; }
+  .profile-user-role{ font-size:12px; font-weight:600; color:var(--text-disabled); flex-shrink:0; white-space:nowrap; }
+  .profile-user-role.owner{ color:var(--primary-6); }
+  .profile-user-menu{ color:var(--text-disabled); flex-shrink:0; margin-left:2px; cursor:pointer; display:flex; transform:rotate(90deg); }
+  .invite-btn{ margin-top:14px; width:100%; border:none; cursor:pointer; background:var(--primary-6); color:#fff; font-family:inherit; font-size:13.5px; font-weight:700; padding:12px; border-radius:100px; display:flex; align-items:center; justify-content:center; gap:6px; }
+
+  .autonomy-layout{ display:flex; gap:10px; align-items:stretch; }
+  .autonomy-options{ flex:1; display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .autonomy-option{ display:flex; align-items:flex-start; gap:10px; border:1.5px solid var(--border-default); border-radius:14px; padding:10px 12px; cursor:pointer; }
+  .autonomy-option.active{ border-color:var(--primary-6); background:var(--primary-1); }
+  .autonomy-radio{ width:16px; height:16px; border-radius:50%; border:1.5px solid var(--grey-4); flex-shrink:0; margin-top:2px; position:relative; }
+  .autonomy-option.active .autonomy-radio{ border-color:var(--primary-6); }
+  .autonomy-option.active .autonomy-radio::after{ content:''; position:absolute; inset:3px; border-radius:50%; background:var(--primary-6); }
+  .autonomy-option-title{ font-size:13px; font-weight:700; color:var(--text-primary); }
+  .autonomy-option-desc{ font-size:11px; color:var(--text-secondary); margin-top:2px; line-height:14px; }
+  .autonomy-preview{ width:108px; flex-shrink:0; background:var(--primary-1); border-radius:16px; padding:14px 10px; text-align:center; }
+  .autonomy-preview-avatar{ width:52px; height:52px; margin:0 auto 8px; border-radius:50%; background:#fff url('assets/Avatar WIS_Gewiss_new.png') no-repeat center / 84%; box-shadow:inset 0 0 0 2px #fff, 0 3px 10px rgba(232,78,15,.25); }
+  .autonomy-preview-badge{ display:inline-block; background:var(--primary-6); color:#fff; font-size:10px; font-weight:700; padding:4px 10px; border-radius:100px; margin-bottom:10px; }
+  .autonomy-preview-list{ text-align:left; display:flex; flex-direction:column; gap:6px; }
+  .autonomy-preview-item{ display:flex; align-items:flex-start; gap:4px; font-size:10px; color:var(--grey-7); line-height:13px; }
+  .autonomy-preview-item iconify-icon{ color:var(--primary-6); flex-shrink:0; margin-top:1px; }
+
+  /* ---------- BOTTOM NAV (black) ---------- */
+  .bottom-nav{
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:4px;
+    background:#1C1C1E;
+    border:1px solid rgba(255,255,255,.08); border-radius:28px; padding:8px;
+    box-shadow:0 10px 34px -8px rgba(0,0,0,.5); z-index:50;
+  }
+  #impact-detail.open ~ .bottom-nav{ z-index:500; }
+  .nav-btn{ border:none; cursor:pointer; width:72px; height:54px; border-radius:18px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; background:transparent; color:rgba(255,255,255,.5); transition:.2s; position:relative; font-family:inherit; }
+  .nav-btn.active{ background:#fff; color:#1C1C1E; }
+  .nav-label{ font-size:10.5px; font-weight:600; line-height:1; color:inherit; }
+
+  .hidden{ display:none !important; }
+
+  /* ---------- VOICE CHAT BOTTOM SHEET ---------- */
+  .hero-avatar-wrap{ cursor:pointer; }
+  .voice-sheet-container{
+    position:absolute; left:0; right:0; bottom:0; height:54%; z-index:300;
+    display:flex; align-items:flex-end; justify-content:center; pointer-events:none;
+  }
+  .voice-sheet{
+    position:relative; width:100%; height:100%; background:#fff; border-radius:28px 28px 0 0;
+    display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 -18px 40px -12px rgba(60,56,57,.16);
+    transform:translateY(100%); transition:transform .38s cubic-bezier(.32,.72,.35,1); pointer-events:auto;
+  }
+  .voice-sheet-container.open .voice-sheet{ transform:translateY(0); }
+  .voice-sheet-handle{ width:36px; height:4px; border-radius:3px; background:var(--grey-4); margin:14px auto 18px; cursor:pointer; flex-shrink:0; }
+  .voice-sheet-scroll{ flex:1; min-height:0; overflow-y:auto; padding:0 24px 16px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .voice-input-bar{ flex-shrink:0; display:flex; align-items:center; gap:8px; padding:12px 20px calc(20px + env(safe-area-inset-bottom)); border-top:1px solid var(--border-default); background:#fff; }
+  .voice-input-mic{ width:38px; height:38px; border-radius:50%; border:none; cursor:pointer; background:var(--primary-1); color:var(--primary-6); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:.2s; }
+  .voice-input-mic.is-listening{ background:var(--primary-6); color:#fff; animation:wisGlow 1s ease-in-out infinite; }
+  .voice-input-field{ flex:1; min-width:0; border:1px solid var(--border-default); background:var(--bg-card); border-radius:100px; padding:10px 16px; font-size:14px; font-family:inherit; color:var(--text-primary); outline:none; }
+  .voice-input-field:focus{ border-color:var(--primary-4); }
+  .voice-input-send{ width:38px; height:38px; border-radius:50%; border:none; cursor:pointer; background:var(--primary-6); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .voice-modal-status{ font-size:16px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+  .voice-modal-hint{ font-size:13px; color:var(--text-secondary); margin-bottom:20px; }
+  .voice-waveform{ display:flex; align-items:center; justify-content:center; gap:5px; height:32px; }
+  .voice-waveform span{ display:block; width:4px; border-radius:3px; background:var(--primary-6); animation:waveBar 1.1s ease-in-out infinite; }
+  .voice-waveform span:nth-child(1){ height:12px; animation-delay:0s; }
+  .voice-waveform span:nth-child(2){ height:22px; animation-delay:.1s; }
+  .voice-waveform span:nth-child(3){ height:30px; animation-delay:.2s; }
+  .voice-waveform span:nth-child(4){ height:20px; animation-delay:.3s; }
+  .voice-waveform span:nth-child(5){ height:14px; animation-delay:.4s; }
+  @keyframes waveBar{ 0%,100%{ transform:scaleY(.35); } 50%{ transform:scaleY(1); } }
+
+  .voice-chat{ display:flex; flex-direction:column; gap:14px; width:100%; text-align:left; }
+  .voice-chat-row{ display:flex; gap:9px; align-items:flex-start; animation:msgIn .35s ease both; }
+  .voice-chat-row.user{ flex-direction:row-reverse; }
+  .voice-chat-avatar{ width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; }
+  .voice-chat-avatar.user-avatar{ background:var(--beige-light); color:var(--beige-dark); }
+  .voice-chat-avatar.wis-avatar-icon{ background:#fff url('assets/Avatar WIS_Gewiss_new.png') no-repeat center / 84%; border:1px solid var(--border-default); }
+  .voice-chat-bubble{ max-width:74%; padding:10px 14px; border-radius:16px; font-size:14px; line-height:20px; }
+  .voice-chat-row.user .voice-chat-bubble{ background:var(--primary-1); color:var(--text-primary); border-bottom-right-radius:4px; }
+  .voice-chat-row.wis .voice-chat-bubble{ background:var(--bg-card); color:var(--grey-7); border-bottom-left-radius:4px; }
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="notch"></div>
+  <div class="home-indicator"></div>
+  <div class="device-inner">
+
+    <div class="status-bar">
+      <div class="status-time">9:41</div>
+      <div class="status-icons">
+        <img src="assets/statusbar-cellular.svg" width="19.2" height="12.23" alt="">
+        <img src="assets/statusbar-wifi.svg" width="17.14" height="12.33" alt="">
+        <img src="assets/statusbar-battery.svg" width="27.33" height="13" alt="">
+      </div>
+    </div>
+
+    <!-- ============ HOME ============ -->
+    <section class="screen active" id="screen-home">
+      <div class="home-header-row">
+        <div class="home-house-picker">
+          <button class="home-house-btn" onclick="toggleHouseMenu()" title="Tocca per selezionare la casa">
+            <iconify-icon icon="solar:home-2-linear" width="18" height="18"></iconify-icon>
+            <span id="home-house-label">Casa di Andrea</span>
+            <iconify-icon icon="solar:alt-arrow-down-linear" width="14" height="14"></iconify-icon>
+          </button>
+          <div class="home-house-menu hidden" id="home-house-menu">
+            <button class="home-house-menu-item" onclick="selectHouse('mine')">
+              <iconify-icon icon="solar:home-2-linear" width="16" height="16"></iconify-icon>Casa di Andrea
+            </button>
+            <button class="home-house-menu-item" onclick="selectHouse('maria')">
+              <iconify-icon icon="solar:home-2-linear" width="16" height="16"></iconify-icon>Casa di Maria
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero">
+        <div class="hero-avatar-wrap" onclick="toggleVoiceModal()" title="Parla con WIS">
+          <div class="home-speech-bubble" id="home-speech-bubble">Buongiorno Andrea</div>
+          <div class="hero-floating">
+            <div class="hero-glow"></div>
+            <div class="hero-ring"></div>
+            <img class="hero-head" src="assets/Head_Wis.png" alt="WIS">
+          </div>
+          <img class="hero-base" src="assets/Base_Wis.png" alt="">
+        </div>
+      </div>
+
+      <div class="card hidden" id="card-out">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px;">
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--teal-mid);display:flex;align-items:center;justify-content:center;color:var(--teal-dark);"><iconify-icon icon="solar:check-circle-linear" width="16" height="16"></iconify-icon></div>
+          <div style="font-size:15px;font-weight:600;color:var(--teal-dark);">Tutto in sicurezza</div>
+        </div>
+        <p style="margin:0;font-size:16px;line-height:24px;color:var(--grey-7);">Tutto chiuso e in sicurezza: porta, finestre, garage.</p>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-default);font-size:13px;color:var(--text-secondary);">Ultima verifica: <span class="data" style="color:var(--grey-7);">5 min fa</span></div>
+      </div>
+
+      <div class="home-map-card" onclick="openMapZoom()" title="Tocca per aprire la planimetria">
+        <div class="home-map-card-body">
+          <h3 class="home-map-card-title">Tutto sotto controllo</h3>
+          <p class="home-map-card-sub">Tutti i sistemi sono operativi e funzionano correttamente</p>
+        </div>
+        <div class="home-map-card-photo">
+          <img src="assets/planimetria.png" alt="Planimetria di casa">
+          <div class="home-map-pills">
+            <div class="home-map-pill">
+              <iconify-icon icon="solar:login-2-linear" width="15" height="15"></iconify-icon>
+              <div class="home-map-pill-text"><div class="home-map-pill-label">Porte</div><div class="home-map-pill-value">1/4 Aperte</div></div>
+            </div>
+            <div class="home-map-pill">
+              <iconify-icon icon="solar:lightbulb-linear" width="15" height="15"></iconify-icon>
+              <div class="home-map-pill-text"><div class="home-map-pill-label">Luci</div><div class="home-map-pill-value">3/8 Accese</div></div>
+            </div>
+            <div class="home-map-pill">
+              <iconify-icon icon="solar:shield-check-linear" width="15" height="15"></iconify-icon>
+              <div class="home-map-pill-text"><div class="home-map-pill-label">Sistema</div><div class="home-map-pill-value">Attivo</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cameras-card">
+        <div class="cameras-card-header">
+          <div class="cameras-card-icon"><iconify-icon icon="solar:videocamera-linear" width="20" height="20"></iconify-icon></div>
+          <h3 class="cameras-card-title">Telecamere</h3>
+          <span class="cameras-online-badge data">3/5 ONLINE</span>
+        </div>
+        <div class="cameras-grid">
+          <div class="cameras-thumb"><img src="assets/cam-garage.jpg" alt="Garage"></div>
+          <div class="cameras-thumb"><img src="assets/cam-giardino.jpg" alt="Giardino"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============ NOTIFICATIONS ============ -->
+    <section class="screen" id="screen-notif">
+      <div class="profile-header">
+        <h1>Notifiche</h1>
+        <p>Tutto quello che Wis ha notato o deciso per te</p>
+      </div>
+
+      <div class="section-avatar">
+        <div class="suggestion-chip hidden" id="suggestion-chip" onclick="toggleVoiceModal(true)"><iconify-icon icon="solar:lightbulb-bolt-linear" width="14" height="14"></iconify-icon>Ho un suggerimento per te</div>
+        <div class="hero-avatar-wrap" onclick="toggleVoiceModal(true)" title="Parla con WIS">
+          <div class="hero-floating">
+            <div class="hero-glow"></div>
+            <div class="hero-ring"></div>
+            <img class="hero-head" src="assets/Head_Wis.png" alt="WIS">
+          </div>
+          <img class="hero-base" src="assets/Base_Wis.png" alt="">
+        </div>
+      </div>
+
+      <div id="attenzione-subito-block">
+        <div class="section-head">
+          <div class="emergency-head"><span class="emergency-dot"></span>Attenzione subito</div>
+          <button class="link-btn" onclick="replayEmergency()"><iconify-icon icon="solar:restart-linear" width="13" height="13"></iconify-icon> rivedi</button>
+        </div>
+        <div class="emergency-card" id="emergency-card">
+          <div class="emergency-steps">
+            <div class="em-step" id="em-step-initial">
+              <div class="avatar-sm on-emergency"></div>
+              <div style="flex:1;">
+                <p class="decision-text">È suonato il campanello — sono le 10:42, proprio nella fascia della tua consegna. È quasi certamente il corriere.</p>
+              </div>
+            </div>
+            <div class="em-divider hidden" id="em-ask">
+              <p style="margin:0 0 14px;font-size:15px;line-height:22px;color:var(--text-primary);">Vuoi che mi occupi io di tutto?<br>Lo avviso, apro il cancello e aspetto che esca prima di richiuderlo.</p>
+              <div style="display:flex;gap:10px;">
+                <button class="btn-primary" onclick="acceptDelivery()">Sì, gestisci tu</button>
+                <button class="btn-secondary" onclick="declineDelivery()">No, ci penso io</button>
+              </div>
+            </div>
+            <div class="em-divider em-solo hidden" id="em-called" style="font-size:15px;color:var(--teal-dark);font-weight:500;">Fatto. Ho avvisato il corriere, aperto il cancello e aspetto che esca prima di richiuderlo.</div>
+            <div class="em-divider em-solo hidden" id="em-dismissed" style="font-size:15px;color:var(--grey-7);font-weight:500;">Va bene, ci pensi tu.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin:26px 2px 10px;">Tutto sotto controllo</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card-sm ok-row hidden" id="delivery-done-card">
+          <div class="ok-icon" style="background:var(--primary-2);color:var(--primary-7);"><iconify-icon icon="solar:box-linear" width="18" height="18"></iconify-icon></div>
+          <div><p class="ok-text">Fatto. Ho avvisato il corriere, aperto il cancello e aspetto che esca prima di richiuderlo.</p><div class="ok-time data">10:42</div></div>
+        </div>
+        <div class="card-sm ok-row">
+          <div class="ok-icon" style="background:var(--primary-2);color:var(--primary-7);"><iconify-icon icon="solar:bolt-linear" width="18" height="18"></iconify-icon></div>
+          <div><p class="ok-text">È andata via la corrente per qualche minuto alle 14.22.<br>Mi sono occupato io di tutto, puoi stare tranquillo.<br>La casa è esattamente come l'hai lasciata.</p><div class="ok-time data">14:22</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VALUE ============ -->
+    <section class="screen" id="screen-value">
+      <div class="profile-header">
+        <h1>Valore</h1>
+        <p>Quello che abbiamo fatto questo mese</p>
+      </div>
+
+      <div class="section-avatar">
+        <div class="hero-avatar-wrap" onclick="toggleVoiceModal()" title="Parla con WIS">
+          <div class="hero-floating">
+            <div class="hero-glow"></div>
+            <div class="hero-ring"></div>
+            <img class="hero-head" src="assets/Head_Wis.png" alt="WIS">
+          </div>
+          <img class="hero-base" src="assets/Base_Wis.png" alt="">
+        </div>
+      </div>
+
+      <div class="riepilogo-card" style="margin-top:24px;">
+        <div class="riepilogo-header">
+          <div class="riepilogo-title">Riepilogo giugno</div>
+          <div class="riepilogo-badge-stack">
+            <span class="riepilogo-badge"><iconify-icon icon="solar:leaf-bold" width="13" height="13"></iconify-icon>18 kg CO₂ evitati</span>
+            <span class="riepilogo-badge"><iconify-icon icon="solar:star-bold" width="13" height="13"></iconify-icon>3 consigli completati</span>
+          </div>
+        </div>
+        <div class="riepilogo-sub">Abbiamo liberato</div>
+        <div class="riepilogo-amount data">29€</div>
+        <div class="riepilogo-note"><iconify-icon icon="solar:stars-bold" width="14" height="14"></iconify-icon>insieme questo mese</div>
+        <div class="riepilogo-divider"></div>
+        <div class="riepilogo-pills">
+          <div class="riepilogo-pill">
+            <div class="riepilogo-pill-icon"><iconify-icon icon="solar:lightbulb-linear" width="12" height="12"></iconify-icon></div>
+            <span class="riepilogo-pill-text"><span class="riepilogo-pill-label">Luce</span><span class="riepilogo-pill-value">−12%</span></span>
+          </div>
+          <div class="riepilogo-pill">
+            <div class="riepilogo-pill-icon"><iconify-icon icon="solar:lightbulb-linear" width="12" height="12"></iconify-icon></div>
+            <span class="riepilogo-pill-text"><span class="riepilogo-pill-label">Clima</span><span class="riepilogo-pill-value">−15%</span></span>
+          </div>
+          <div class="riepilogo-pill">
+            <div class="riepilogo-pill-icon"><iconify-icon icon="solar:clock-circle-linear" width="12" height="12"></iconify-icon></div>
+            <span class="riepilogo-pill-text"><span class="riepilogo-pill-label">Tempo</span><span class="riepilogo-pill-value">−9%</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin:24px 2px 12px;">Challenge</div>
+
+      <div class="challenge-card" style="cursor:pointer;" onclick="openChallengeDetail('acqua')">
+        <div>
+          <div class="challenge-card-title">Luce intelligente</div>
+          <div class="challenge-card-meta"><iconify-icon icon="solar:flag-2-linear" width="14" height="14"></iconify-icon>2 sfide</div>
+          <button class="challenge-card-btn" style="background:#8B6B47;" onclick="event.stopPropagation();">Scopri l'obiettivo</button>
+        </div>
+        <div class="challenge-card-icon" style="background:#F5EEE3;color:#8B6B47;">
+          <iconify-icon icon="solar:lightbulb-linear" width="26" height="26"></iconify-icon>
+        </div>
+      </div>
+
+      <div class="challenge-card" style="cursor:pointer;" onclick="openChallengeDetail('energia')">
+        <div>
+          <div class="challenge-card-title">Clima su misura</div>
+          <div class="challenge-card-meta"><iconify-icon icon="solar:flag-2-linear" width="14" height="14"></iconify-icon>1 sfida</div>
+          <button class="challenge-card-btn" style="background:#1B5E80;" onclick="event.stopPropagation();">Scopri l'obiettivo</button>
+        </div>
+        <div class="challenge-card-icon" style="background:#D4F0F7;color:#1B5E80;">
+          <iconify-icon icon="solar:snowflake-linear" width="26" height="26"></iconify-icon>
+        </div>
+      </div>
+
+      <div class="challenge-card" style="cursor:pointer;" onclick="openChallengeDetail('riscaldamento')">
+        <div>
+          <div class="challenge-card-title">Tempo guadagnato</div>
+          <div class="challenge-card-meta"><iconify-icon icon="solar:flag-2-linear" width="14" height="14"></iconify-icon>1 sfida</div>
+          <button class="challenge-card-btn" style="background:#DB3700;" onclick="event.stopPropagation();">Scopri l'obiettivo</button>
+        </div>
+        <div class="challenge-card-icon" style="background:#FFF6F2;color:#DB3700;">
+          <iconify-icon icon="solar:clock-circle-linear" width="26" height="26"></iconify-icon>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============ PROFILE ============ -->
+    <section class="screen" id="screen-profile">
+      <div class="profile-header">
+        <h1>Profilo</h1>
+        <p>Gestisci account, case e Wis</p>
+      </div>
+
+      <div class="profile-user-card">
+        <img class="profile-user-avatar" src="https://i.pravatar.cc/150?img=68" alt="Andrea">
+        <div class="profile-user-info">
+          <div class="profile-user-name">Andrea</div>
+          <div class="profile-user-email">andrea@email.it</div>
+        </div>
+        <button class="profile-edit-btn"><iconify-icon icon="solar:pen-2-linear" width="14" height="14"></iconify-icon>Modifica</button>
+      </div>
+
+      <div class="profile-section-card">
+        <div class="profile-section-title">Gestione case</div>
+        <p class="profile-section-desc">Aggiungi, modifica o rimuovi le case associate al tuo account.</p>
+        <div class="house-scroll">
+          <button class="house-card-v2 active" id="house-mine" onclick="setHouse('mine')">
+            <div class="house-card-v2-icon"><iconify-icon icon="solar:home-2-linear" width="16" height="16"></iconify-icon></div>
+            <div class="house-card-v2-name">Casa tua</div>
+            <div class="house-card-v2-addr">Via Roma 12, Milano</div>
+            <div class="house-card-v2-tag" id="house-mine-tag"><iconify-icon icon="solar:check-circle-bold" width="12" height="12"></iconify-icon>Casa attiva</div>
+          </button>
+          <button class="house-card-v2" id="house-maria" onclick="setHouse('maria')">
+            <div class="house-card-v2-icon"><iconify-icon icon="solar:home-2-linear" width="16" height="16"></iconify-icon></div>
+            <div class="house-card-v2-name">Casa di Maria</div>
+            <div class="house-card-v2-addr">Via del Mare 8, Sanremo</div>
+            <div class="house-card-v2-tag" id="house-maria-tag" style="visibility:hidden;"><iconify-icon icon="solar:check-circle-bold" width="12" height="12"></iconify-icon>Casa attiva</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="profile-section-card">
+        <div class="profile-section-title">Gestione utenti</div>
+        <p class="profile-section-desc">Gestisci le persone che hanno accesso alla casa.</p>
+        <div class="profile-user-row">
+          <img class="profile-user-row-avatar" src="https://i.pravatar.cc/150?img=68" alt="Andrea">
+          <div class="profile-user-row-info">
+            <div class="profile-user-row-name">Andrea <span>(tu)</span></div>
+            <div class="profile-user-row-email">andrea@email.it</div>
+          </div>
+          <div class="profile-user-role owner">Proprietario</div>
+          <div class="profile-user-menu"><iconify-icon icon="solar:menu-dots-bold" width="18" height="18"></iconify-icon></div>
+        </div>
+        <div class="profile-user-row">
+          <img class="profile-user-row-avatar" src="https://i.pravatar.cc/150?img=47" alt="Lucia">
+          <div class="profile-user-row-info">
+            <div class="profile-user-row-name">Lucia</div>
+            <div class="profile-user-row-email">lucia@email.it</div>
+          </div>
+          <div class="profile-user-role">Membro</div>
+          <div class="profile-user-menu"><iconify-icon icon="solar:menu-dots-bold" width="18" height="18"></iconify-icon></div>
+        </div>
+        <div class="profile-user-row">
+          <img class="profile-user-row-avatar" src="https://i.pravatar.cc/150?img=33" alt="Matteo">
+          <div class="profile-user-row-info">
+            <div class="profile-user-row-name">Matteo</div>
+            <div class="profile-user-row-email">matteo@email.it</div>
+          </div>
+          <div class="profile-user-role">Membro</div>
+          <div class="profile-user-menu"><iconify-icon icon="solar:menu-dots-bold" width="18" height="18"></iconify-icon></div>
+        </div>
+        <button class="invite-btn"><iconify-icon icon="solar:user-plus-linear" width="16" height="16"></iconify-icon>Invita utente</button>
+      </div>
+
+      <div class="profile-section-card">
+        <div class="profile-section-title">Personalizza Wis</div>
+        <p class="profile-section-desc">Scegli quanto Wis deve essere autonomo nella gestione della tua casa.</p>
+        <div class="autonomy-layout">
+          <div class="autonomy-options">
+            <div class="autonomy-option" id="autonomy-base" onclick="setAutonomy('base')">
+              <div class="autonomy-radio"></div>
+              <div>
+                <div class="autonomy-option-title">Base</div>
+                <div class="autonomy-option-desc">Wis ti suggerisce cosa fare, ma aspetta la tua conferma.</div>
+              </div>
+            </div>
+            <div class="autonomy-option active" id="autonomy-bilanciato" onclick="setAutonomy('bilanciato')">
+              <div class="autonomy-radio"></div>
+              <div>
+                <div class="autonomy-option-title">Bilanciato</div>
+                <div class="autonomy-option-desc">Wis gestisce routine comuni con notifiche e possibilità di modifica.</div>
+              </div>
+            </div>
+            <div class="autonomy-option" id="autonomy-avanzato" onclick="setAutonomy('avanzato')">
+              <div class="autonomy-radio"></div>
+              <div>
+                <div class="autonomy-option-title">Avanzato</div>
+                <div class="autonomy-option-desc">Wis ottimizza comfort, consumi e sicurezza con maggiore autonomia.</div>
+              </div>
+            </div>
+          </div>
+          <div class="autonomy-preview">
+            <div class="autonomy-preview-avatar"></div>
+            <div class="autonomy-preview-badge" id="autonomy-badge">Livello Bilanciato</div>
+            <div class="autonomy-preview-list" id="autonomy-list">
+              <div class="autonomy-preview-item"><iconify-icon icon="solar:check-circle-bold" width="12" height="12"></iconify-icon><span>Suggerimenti personalizzati</span></div>
+              <div class="autonomy-preview-item"><iconify-icon icon="solar:check-circle-bold" width="12" height="12"></iconify-icon><span>Automazioni quotidiane controllabili</span></div>
+              <div class="autonomy-preview-item"><iconify-icon icon="solar:check-circle-bold" width="12" height="12"></iconify-icon><span>Possibilità di intervenire in ogni momento</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VOICE CHAT BOTTOM SHEET ============ -->
+    <div class="voice-sheet-container" id="voice-modal">
+      <div class="voice-sheet">
+        <div class="voice-sheet-handle" onclick="closeVoiceModal()" title="Chiudi"></div>
+
+        <div class="voice-sheet-scroll">
+          <div class="dark-info-card" id="morning-card" style="margin-bottom:18px;cursor:pointer;" onclick="toggleMorningCard()">
+            <div class="dark-info-eyebrow">Routine mattutina attiva</div>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+              <p class="wis-speech" id="wis-speech" style="flex:1;">In cucina è tutto pronto per la tua colazione.</p>
+              <iconify-icon id="morning-chevron" icon="solar:alt-arrow-down-linear" width="16" height="16" style="color:rgba(255,255,255,.6);flex-shrink:0;margin-top:8px;transition:transform .25s;"></iconify-icon>
+            </div>
+            <div class="hidden" id="morning-detail">
+              <div class="dark-info-divider"></div>
+              <div class="mini-actions-card" id="morning-actions">
+                <div class="mini-action-row is-featured">
+                  <div class="mini-action-icon"><iconify-icon icon="solar:window-frame-bold" width="16" height="16"></iconify-icon></div>
+                  <span>Ho alzato le tapparelle</span>
+                  <iconify-icon class="mini-action-check" icon="solar:check-circle-bold" width="16" height="16"></iconify-icon>
+                </div>
+                <div class="mini-action-row">
+                  <div class="mini-action-icon"><iconify-icon icon="solar:cup-hot-bold" width="16" height="16"></iconify-icon></div>
+                  <span>Ho acceso la macchinetta del caffè</span>
+                </div>
+                <div class="mini-action-row">
+                  <div class="mini-action-icon"><iconify-icon icon="solar:thermometer-bold" width="16" height="16"></iconify-icon></div>
+                  <span>Ho regolato la temperatura</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="decision-card hidden" id="laundry-card" style="margin-bottom:18px;width:100%;">
+            <div>
+              <div id="laundry-pending">
+                <p class="decision-text">Accendiamo la lavatrice alle 19:00 per risparmiare.</p>
+                <div class="decision-actions">
+                  <button class="btn-primary" onclick="confirmLaundry()">Va bene</button>
+                  <button class="btn-secondary" onclick="ignoreLaundry()">Ignora</button>
+                </div>
+              </div>
+              <p class="resolved-text hidden" id="laundry-done" style="color:var(--teal-dark);">Fatto, parte alle 19:00.</p>
+              <p class="resolved-text hidden" id="laundry-ignored" style="color:var(--grey-7);">Va bene, non la accendo.</p>
+            </div>
+          </div>
+
+          <div id="voice-listening">
+            <div class="voice-modal-status">Ti ascolto, Andrea</div>
+            <div class="voice-modal-hint">Dimmi pure cosa ti serve</div>
+            <div class="voice-waveform">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+
+          <div class="voice-chat hidden" id="voice-chat">
+            <div class="voice-chat-row user">
+              <div class="voice-chat-avatar user-avatar">A</div>
+              <div class="voice-chat-bubble">Ricordami di innaffiare le piante stasera.</div>
+            </div>
+            <div class="voice-chat-row wis">
+              <div class="voice-chat-avatar wis-avatar-icon"></div>
+              <div class="voice-chat-bubble">Fatto. Te lo ricorderò stasera alle 19, come sempre.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="voice-input-bar">
+          <button class="voice-input-mic" id="voice-input-mic" onclick="continueByVoice()" title="Continua parlando">
+            <iconify-icon icon="solar:microphone-linear" width="18" height="18"></iconify-icon>
+          </button>
+          <input type="text" class="voice-input-field" id="voice-text-input" placeholder="Scrivi un messaggio…" onkeydown="if(event.key==='Enter') sendVoiceText();">
+          <button class="voice-input-send" onclick="sendVoiceText()" title="Invia">
+            <iconify-icon icon="solar:arrow-up-linear" width="18" height="18"></iconify-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ IMPACT DETAIL SCREEN ============ -->
+    <div class="impact-detail-overlay" id="impact-detail">
+      <button class="impact-detail-back" onclick="handleDetailBack()" title="Indietro">
+        <iconify-icon icon="solar:arrow-left-linear" width="20" height="20"></iconify-icon>
+      </button>
+      <div class="impact-detail-inner">
+        <div id="detail-list-view">
+          <div class="section-label" style="margin:0 2px 12px;">Elenco sfide</div>
+          <div class="impact-list" id="detail-list-preview"></div>
+        </div>
+
+        <div class="hidden" id="detail-full-content">
+          <div class="detail-card">
+            <div class="detail-head-row">
+              <div class="detail-icon" id="detail-icon-wrap"><iconify-icon id="detail-icon" width="28" height="28"></iconify-icon></div>
+              <div class="detail-head-body">
+                <div class="detail-label-row">
+                  <span class="detail-label" id="detail-label"></span>
+                  <span class="impact-badge">Fatto</span>
+                </div>
+                <div class="detail-title" id="detail-title"></div>
+                <div class="detail-desc" id="detail-desc"></div>
+              </div>
+            </div>
+            <div class="detail-status-row" id="detail-status-row">
+              <span class="detail-status-dot" id="detail-status-dot"></span>
+              <span class="detail-status-text" id="detail-status-text"></span>
+              <span class="detail-status-goals" id="detail-status-goals"></span>
+            </div>
+            <div class="detail-milestones" id="detail-milestones"></div>
+          </div>
+
+          <div class="detail-card" style="margin-top:12px;">
+            <div class="detail-stats-label" id="detail-stats-label"></div>
+            <div class="detail-stats-row" id="detail-stats-row"></div>
+          </div>
+
+          <div class="detail-card" style="margin-top:12px;">
+            <div class="detail-tips-title-row">
+              <iconify-icon icon="solar:lightbulb-bolt-linear" width="16" height="16" id="detail-tips-icon"></iconify-icon>
+              <span class="detail-tips-title">Lo sapevi?</span>
+            </div>
+            <div style="margin-top:10px;" id="detail-tips"></div>
+          </div>
+
+          <button class="detail-btn-secondary has-avatar" onclick="closeImpactDetail()" style="margin-top:12px;">
+            <div class="mini-wis-float"><img src="assets/Head_Wis.png" alt="WIS"></div>
+            <span>Un'altra sfida?</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MAP ZOOM OVERLAY ============ -->
+    <div class="map-zoom-overlay" id="map-zoom">
+      <div class="map-zoom-title">Planimetria di casa</div>
+      <button class="map-zoom-close" onclick="closeMapZoom()" title="Chiudi">
+        <span class="icon-x"></span>
+      </button>
+      <div class="map-zoom-content">
+        <img src="assets/planimetria.png" alt="Planimetria di casa">
+        <div class="map-zoom-chips hidden" id="map-zoom-chips">
+          <div class="map-room-chip" style="left:19.9%;top:23.7%;" onclick="event.stopPropagation(); openRoomDetail('Camera da letto')">Camera da letto</div>
+          <div class="map-room-chip" style="left:54.9%;top:20.7%;" onclick="event.stopPropagation(); openRoomDetail('Bagno')">Bagno</div>
+          <div class="map-room-chip" style="left:29.3%;top:59.2%;" onclick="event.stopPropagation(); openRoomDetail('Cucina')">Cucina</div>
+          <div class="map-room-chip" style="left:54.9%;top:54.5%;" onclick="event.stopPropagation(); openRoomDetail('Soggiorno')">Soggiorno</div>
+          <div class="map-room-chip" style="left:77.1%;top:38.9%;" onclick="event.stopPropagation(); openRoomDetail('Studio')">Studio</div>
+          <div class="map-room-chip" style="left:36.8%;top:88.8%;" onclick="event.stopPropagation(); openRoomDetail('Lavanderia')">Lavanderia</div>
+          <div class="map-room-chip" style="left:75.2%;top:87.1%;" onclick="event.stopPropagation(); openRoomDetail('Ingresso')">Ingresso</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ROOM DETAIL OVERLAY ============ -->
+    <div class="room-detail-overlay" id="room-detail-overlay">
+      <div class="room-detail-photo">
+        <img id="room-detail-photo-img" src="" alt="">
+        <button class="room-detail-back" onclick="closeRoomDetail()" title="Indietro">
+          <iconify-icon icon="solar:arrow-left-linear" width="20" height="20"></iconify-icon>
+        </button>
+        <button class="room-detail-close" onclick="closeRoomDetail(); closeMapZoom();" title="Chiudi">
+          <span class="icon-x"></span>
+        </button>
+        <div class="room-detail-photo-label" id="room-detail-photo-label">Stanza</div>
+      </div>
+      <div class="room-detail-body">
+        <div class="room-detail-header-row">
+          <span class="room-detail-eyebrow">STANZA</span>
+          <span class="room-detail-active-badge" id="room-detail-active-badge"><span class="dot"></span><span id="room-detail-active-count">0 attivi</span></span>
+        </div>
+        <p class="room-detail-hint">Tocca una card per accendere o spegnere</p>
+        <div class="room-detail-grid" id="room-detail-grid"></div>
+      </div>
+    </div>
+
+    <!-- ============ BOTTOM NAV ============ -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" id="nav-home" title="Home" onclick="setTab('home')">
+        <iconify-icon icon="solar:home-2-linear" width="20" height="20"></iconify-icon>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-btn" id="nav-notif" title="Notifiche" onclick="setTab('notif')">
+        <iconify-icon icon="solar:bell-linear" width="20" height="20"></iconify-icon>
+        <span class="nav-label">Notifiche</span>
+      </button>
+      <button class="nav-btn" id="nav-value" title="Valore" onclick="setTab('value')">
+        <iconify-icon icon="solar:star-linear" width="20" height="20"></iconify-icon>
+        <span class="nav-label">Valore</span>
+      </button>
+      <button class="nav-btn" id="nav-profile" title="Profilo" onclick="setTab('profile')">
+        <iconify-icon icon="solar:user-rounded-linear" width="20" height="20"></iconify-icon>
+        <span class="nav-label">Profilo</span>
+      </button>
+    </nav>
+
+  </div>
+</div>
+
+<script>
+  const state = {
+    tab: 'home', ctx: 'in',
+    emChoice: null, deliveryResolved: false, chatFromSuggestion: false, house: 'mine', autonomy: 'bilanciato'
+  };
+
+  const speeches = {
+    in: "In cucina è tutto pronto per la tua colazione.",
+    out: "Ciao Andrea. Sei fuori: tengo io la casa d'occhio, con calma. Nessun pensiero."
+  };
+
+  function setTab(tab){
+    state.tab = tab;
+    closeImpactDetail();
+    render();
+    document.getElementById('screen-' + tab).scrollTop = 0;
+  }
+
+  let voiceTimer = null;
+  function openVoiceModal(fromSuggestion){
+    state.chatFromSuggestion = !!fromSuggestion;
+    render();
+    document.getElementById('voice-modal').classList.add('open');
+    document.getElementById('voice-listening').classList.remove('hidden');
+    document.getElementById('voice-chat').classList.add('hidden');
+    clearTimeout(voiceTimer);
+    voiceTimer = setTimeout(finishListening, 2600);
+  }
+  function finishListening(){
+    document.getElementById('voice-listening').classList.add('hidden');
+    document.getElementById('voice-chat').classList.remove('hidden');
+  }
+  function closeVoiceModal(){
+    document.getElementById('voice-modal').classList.remove('open');
+    clearTimeout(voiceTimer);
+  }
+  function toggleVoiceModal(fromSuggestion){
+    const isOpen = document.getElementById('voice-modal').classList.contains('open');
+    if (isOpen) closeVoiceModal(); else openVoiceModal(fromSuggestion);
+  }
+
+  function appendVoiceMessage(role, text){
+    const chat = document.getElementById('voice-chat');
+    document.getElementById('voice-listening').classList.add('hidden');
+    chat.classList.remove('hidden');
+    const row = document.createElement('div');
+    row.className = 'voice-chat-row ' + role;
+    row.innerHTML = role === 'user'
+      ? '<div class="voice-chat-avatar user-avatar">A</div><div class="voice-chat-bubble"></div>'
+      : '<div class="voice-chat-avatar wis-avatar-icon"></div><div class="voice-chat-bubble"></div>';
+    row.querySelector('.voice-chat-bubble').textContent = text;
+    chat.appendChild(row);
+    const scroll = document.querySelector('.voice-sheet-scroll');
+    scroll.scrollTop = scroll.scrollHeight;
+  }
+
+  function sendVoiceText(){
+    const input = document.getElementById('voice-text-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    appendVoiceMessage('user', text);
+    setTimeout(() => appendVoiceMessage('wis', 'Fatto, ci penso io.'), 700);
+  }
+
+  function continueByVoice(){
+    const mic = document.getElementById('voice-input-mic');
+    mic.classList.add('is-listening');
+    clearTimeout(voiceTimer);
+    voiceTimer = setTimeout(() => {
+      mic.classList.remove('is-listening');
+      appendVoiceMessage('user', 'Grazie WIS.');
+      setTimeout(() => appendVoiceMessage('wis', 'Di nulla, sono sempre qui.'), 700);
+    }, 1800);
+  }
+
+
+  function toggleMorningCard(){
+    const detail = document.getElementById('morning-detail');
+    const chevron = document.getElementById('morning-chevron');
+    const isHidden = detail.classList.toggle('hidden');
+    chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+  }
+
+  function openMapZoom(){
+    document.querySelector('.map-zoom-title').textContent = 'Planimetria di casa';
+    document.querySelector('.map-zoom-content img').src = 'assets/planimetria.png';
+    document.getElementById('map-zoom-chips').classList.remove('hidden');
+    document.getElementById('map-zoom').classList.add('open');
+  }
+  function closeMapZoom(){ document.getElementById('map-zoom').classList.remove('open'); }
+
+  const ROOM_DATA = {
+    'Camera da letto': { img:'assets/room-camera-da-letto.jpg?v=2', devices:[
+      { icon:'solar:lightbulb-linear', name:'Illuminazione', meta:'Dimmer · 80%', on:true },
+      { icon:'solar:wind-linear', name:'Climatizzatore', meta:'22° · Modalità auto', on:true },
+      { icon:'solar:thermometer-linear', name:'Termostato', meta:'22.4° · Riscaldamento', on:true },
+      { icon:'solar:window-frame-linear', name:'Tapparella', meta:'Aperta', on:false },
+    ]},
+    'Bagno': { img:'assets/room-bagno.jpg?v=2', devices:[
+      { icon:'solar:lightbulb-linear', name:'Illuminazione', meta:'Dimmer · 60%', on:true },
+      { icon:'solar:bath-linear', name:'Scaldasalviette', meta:'Attivo', on:true },
+      { icon:'solar:wind-linear', name:'Ventilazione', meta:'Auto', on:false },
+      { icon:'solar:cloud-linear', name:'Boiler', meta:'Standby', on:false },
+    ]},
+    'Cucina': { img:'assets/room-cucina.jpg?v=2', devices:[
+      { icon:'solar:lightbulb-linear', name:'Illuminazione', meta:'100%', on:true },
+      { icon:'solar:chef-hat-linear', name:'Forno', meta:'200° · Cottura', on:true },
+      { icon:'solar:wind-linear', name:'Cappa aspirante', meta:'Velocità 2', on:true },
+      { icon:'solar:fridge-linear', name:'Frigorifero', meta:'Consumo: 1.2 kWh', on:false },
+    ]},
+    'Soggiorno': { img:'assets/room-soggiorno.jpg?v=2', devices:[
+      { icon:'solar:lightbulb-linear', name:'Illuminazione', meta:'Dimmer · 80%', on:true },
+      { icon:'solar:wind-linear', name:'Climatizzatore', meta:'22° · Modalità auto', on:true },
+      { icon:'solar:thermometer-linear', name:'Termostato', meta:'22.4° · Riscaldamento', on:true },
+      { icon:'solar:tv-linear', name:'Smart TV', meta:'Consumo: 8 kWh', on:false },
+      { icon:'solar:volume-loud-linear', name:'Sonos', meta:'Standby', on:false },
+      { icon:'solar:window-frame-linear', name:'Tenda motorizzata', meta:'Chiusa', on:false },
+    ]},
+    'Studio': { img:'assets/room-studio.jpg?v=2', devices:[
+      { icon:'solar:lightbulb-linear', name:'Illuminazione', meta:'Dimmer · 70%', on:true },
+      { icon:'solar:hand-stars-linear', name:'Presa smart PC', meta:'Attiva', on:true },
+      { icon:'solar:wind-linear', name:'Climatizzatore', meta:'21° · Manuale', on:false },
+      { icon:'solar:window-frame-linear', name:'Tapparella', meta:'Chiusa', on:false },
+    ]},
+    'Lavanderia': { img:'assets/room-lavanderia.jpg?v=2', devices:[
+      { icon:'solar:washing-machine-linear', name:'Lavatrice', meta:'Cotone · 32 min', on:true },
+      { icon:'solar:lightbulb-linear', name:'Illuminazione', meta:'100%', on:true },
+      { icon:'solar:hanger-2-linear', name:'Asciugatrice', meta:'Standby', on:false },
+      { icon:'solar:cloud-linear', name:'Deumidificatore', meta:'Auto', on:false },
+    ]},
+    'Ingresso': { img:'assets/room-ingresso.jpg?v=2', devices:[
+      { icon:'solar:lightbulb-linear', name:'Illuminazione', meta:'100%', on:true },
+      { icon:'solar:lock-keyhole-linear', name:'Serratura smart', meta:'Chiusa', on:true },
+      { icon:'solar:videocamera-linear', name:'Telecamera', meta:'Registrazione attiva', on:true },
+      { icon:'solar:bell-linear', name:'Campanello', meta:'Online', on:false },
+    ]},
+  };
+
+  function openRoomDetail(name){
+    const room = ROOM_DATA[name];
+    if (!room) return;
+    document.getElementById('room-detail-photo-img').src = room.img;
+    document.getElementById('room-detail-photo-label').textContent = name;
+    renderRoomDevices(name);
+    document.getElementById('room-detail-overlay').classList.add('open');
+  }
+  function closeRoomDetail(){ document.getElementById('room-detail-overlay').classList.remove('open'); }
+
+  function toggleRoomDevice(roomName, idx){
+    ROOM_DATA[roomName].devices[idx].on = !ROOM_DATA[roomName].devices[idx].on;
+    renderRoomDevices(roomName);
+  }
+
+  function renderRoomDevices(roomName){
+    const room = ROOM_DATA[roomName];
+    const grid = document.getElementById('room-detail-grid');
+    grid.innerHTML = room.devices.map((d, i) => `
+      <div class="room-device-card ${d.on ? 'on' : ''}" onclick="toggleRoomDevice('${roomName}', ${i})">
+        <div class="room-device-icon"><iconify-icon icon="${d.icon}" width="18" height="18"></iconify-icon></div>
+        <div class="room-device-toggle"><div class="room-device-toggle-knob"></div></div>
+        <p class="room-device-name">${d.name}</p>
+        <p class="room-device-meta">${d.meta}</p>
+      </div>
+    `).join('');
+    const activeCount = room.devices.filter(d => d.on).length;
+    document.getElementById('room-detail-active-count').textContent = activeCount + ' attivi';
+  }
+
+
+  function confirmLaundry(){
+    document.getElementById('laundry-pending').classList.add('hidden');
+    document.getElementById('laundry-done').classList.remove('hidden');
+  }
+  function ignoreLaundry(){
+    document.getElementById('laundry-pending').classList.add('hidden');
+    document.getElementById('laundry-ignored').classList.remove('hidden');
+  }
+
+  const IMPACT_DETAILS = {
+    acqua: {
+      icon: 'solar:lightbulb-bold', listIcon: 'solar:lightbulb-linear', color: '#8B6B47', bg: 'var(--beige-light)',
+      badgeText: 'Facile', badgeBg: '#E8F5E9', badgeFg: '#2E7D32', statValue: '6€', statUnit: '/ mese',
+      label: 'Luce', title: 'Luci intelligenti',
+      desc: 'Spegni le luci nelle stanze vuote.',
+      statusText: 'Attiva da 12 giorni', goalsText: '2/3 traguardi',
+      milestones: [
+        { done:true, text:'Sensori di presenza configurati' },
+        { done:true, text:'Consumo ridotto del 12% (era 18%)' },
+        { done:false, text:'Obiettivo: raggiungere -20%' },
+      ],
+      statsLabel: 'Risparmio stimato',
+      stats: [ ['2,40€','Ottenuto finora'], ['6€','Al mese'], ['72€',"All'anno"] ],
+      tips: [
+        "Una lampadina accesa inutilmente per 8 ore = circa 0,10€ sprecati.",
+        'Wis spegne le luci nelle stanze vuote dopo 10 minuti.',
+      ],
+    },
+    energia: {
+      icon: 'solar:bolt-bold', listIcon: 'solar:bolt-linear', color: '#E84E0F', bg: 'var(--primary-2)',
+      badgeText: 'Facile', badgeBg: '#E8F5E9', badgeFg: '#2E7D32', statValue: '8€', statUnit: '/ mese',
+      label: 'Energia', title: 'Lavatrice in notturna',
+      desc: 'Sposta i lavaggi dopo le 22:00.',
+      statusText: 'Attiva da 15 giorni', goalsText: '2/3 traguardi',
+      milestones: [
+        { done:true, text:'Programma notturno impostato' },
+        { done:true, text:'Lavatrice avviata in fascia oraria conveniente' },
+        { done:false, text:'Obiettivo: -30% costo lavaggi' },
+      ],
+      statsLabel: 'Risparmio stimato',
+      stats: [ ['2€','Ottenuto finora'], ['8€','Al mese'], ['96€',"All'anno"] ],
+      tips: [
+        'La fascia oraria dopo le 22:00 costa in media il 30% in meno.',
+        'Wis avvia la lavatrice da solo nella fascia più conveniente, senza che tu debba ricordartene.',
+      ],
+    },
+    riscaldamento: {
+      icon: 'solar:thermometer-bold', listIcon: 'solar:thermometer-linear', color: '#B74F00', bg: 'var(--primary-2)',
+      badgeText: 'Medio', badgeBg: '#FFF3D4', badgeFg: '#7A4500', statValue: '11€', statUnit: '/ mese',
+      label: 'Riscaldamento', title: 'Abbassa di 1° la notte',
+      desc: 'Programma 19° dalle 23:00 alle 7:00.',
+      statusText: 'Attiva da 9 giorni', goalsText: '1/3 traguardi',
+      milestones: [
+        { done:true, text:'Programma notturno impostato' },
+        { done:false, text:'Temperatura media serale abbassata' },
+        { done:false, text:'Obiettivo: -20% costo riscaldamento' },
+      ],
+      statsLabel: 'Risparmio stimato',
+      stats: [ ['3€','Ottenuto finora'], ['11€','Al mese'], ['132€',"All'anno"] ],
+      tips: [
+        'Un grado in meno la notte riduce i consumi fino all\'8%, senza perdere comfort.',
+        'Wis riporta la temperatura a livello ottimale prima che tu ti svegli.',
+      ],
+    },
+  };
+
+  let detailViewState = 'list';
+  let currentDetailKey = null;
+
+  function renderImpactCardHTML(key){
+    const d = IMPACT_DETAILS[key];
+    if (!d) return '';
+    return `
+      <div class="impact-card" onclick="revealFullDetail()">
+        <div class="impact-icon" style="background:${d.bg};color:${d.color};"><iconify-icon icon="${d.listIcon}" width="24" height="24"></iconify-icon></div>
+        <div class="impact-body">
+          <div class="impact-label" style="color:${d.color};">${d.label}</div>
+          <div class="impact-title">${d.title}</div>
+          <p class="impact-desc">${d.desc}</p>
+        </div>
+        <div class="impact-side">
+          <span class="impact-badge" style="background:${d.badgeBg};color:${d.badgeFg};">${d.badgeText}</span>
+          <div>
+            <div class="impact-stat-label">Risparmio stimato:</div>
+            <div class="impact-stat-value">
+              <span class="impact-number data" style="color:${d.color};">${d.statValue}</span>
+              <span class="impact-unit">${d.statUnit}</span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function populateImpactDetail(key){
+    const d = IMPACT_DETAILS[key];
+    if (!d) return;
+    document.getElementById('detail-icon').setAttribute('icon', d.icon);
+    document.getElementById('detail-icon-wrap').style.background = d.bg;
+    document.getElementById('detail-icon-wrap').style.color = d.color;
+    document.getElementById('detail-label').textContent = d.label.toUpperCase();
+    document.getElementById('detail-label').style.color = d.color;
+    document.getElementById('detail-title').textContent = d.title;
+    document.getElementById('detail-desc').textContent = d.desc;
+
+    const statusRow = document.getElementById('detail-status-row');
+    statusRow.style.background = d.color + '12';
+    document.getElementById('detail-status-dot').style.background = d.color;
+    const statusText = document.getElementById('detail-status-text');
+    statusText.textContent = d.statusText;
+    statusText.style.color = d.color;
+    const goals = document.getElementById('detail-status-goals');
+    goals.textContent = d.goalsText;
+    goals.style.color = d.color;
+
+    document.getElementById('detail-milestones').innerHTML = d.milestones.map(m => `
+      <div class="detail-milestone ${m.done ? 'done' : 'pending'}">
+        <span class="detail-milestone-mark ${m.done ? 'done' : 'pending'}">${m.done ? '<iconify-icon icon="solar:check-circle-bold" width="16" height="16"></iconify-icon>' : ''}</span>
+        <span class="detail-milestone-text">${m.text}</span>
+      </div>`).join('');
+
+    document.getElementById('detail-stats-label').textContent = d.statsLabel.toUpperCase();
+    document.getElementById('detail-stats-row').innerHTML = d.stats.map(s => `
+      <div class="detail-stat-col">
+        <div class="detail-stat-value data" style="color:${d.color};">${s[0]}</div>
+        <div class="detail-stat-label">${s[1]}</div>
+      </div>`).join('');
+
+    document.getElementById('detail-tips-icon').style.color = d.color;
+    document.getElementById('detail-tips').innerHTML = d.tips.map(t => `
+      <div class="detail-tip">
+        <span class="detail-tip-dot" style="background:${d.color};"></span>
+        <span class="detail-tip-text">${t}</span>
+      </div>`).join('');
+  }
+
+  function openChallengeDetail(key){
+    currentDetailKey = key;
+    populateImpactDetail(key);
+    document.getElementById('detail-list-preview').innerHTML = renderImpactCardHTML(key);
+    document.getElementById('detail-list-view').classList.remove('hidden');
+    document.getElementById('detail-full-content').classList.add('hidden');
+    detailViewState = 'list';
+    document.getElementById('impact-detail').classList.add('open');
+  }
+
+  function revealFullDetail(){
+    document.getElementById('detail-list-view').classList.add('hidden');
+    document.getElementById('detail-full-content').classList.remove('hidden');
+    detailViewState = 'full';
+  }
+
+  function handleDetailBack(){
+    if (detailViewState === 'full'){
+      document.getElementById('detail-full-content').classList.add('hidden');
+      document.getElementById('detail-list-view').classList.remove('hidden');
+      detailViewState = 'list';
+    } else {
+      closeImpactDetail();
+    }
+  }
+
+  function closeImpactDetail(){
+    document.getElementById('impact-detail').classList.remove('open');
+  }
+
+  function replayEmergency(){ state.emChoice = null; state.deliveryResolved = false; render(); }
+  function acceptDelivery(){
+    state.emChoice = 'call'; render();
+    setTimeout(() => { state.deliveryResolved = true; render(); }, 1800);
+  }
+  function declineDelivery(){ state.emChoice = 'ok'; render(); }
+
+  function setHouse(h){ state.house = h; render(); }
+  function toggleHouseMenu(){ document.getElementById('home-house-menu').classList.toggle('hidden'); }
+  function selectHouse(h){ state.house = h; document.getElementById('home-house-menu').classList.add('hidden'); render(); }
+  document.addEventListener('click', (e) => {
+    const picker = document.querySelector('.home-house-picker');
+    if (picker && !picker.contains(e.target)) document.getElementById('home-house-menu').classList.add('hidden');
+  });
+  function setAutonomy(a){ state.autonomy = a; render(); }
+
+  function show(id, on){ document.getElementById(id).classList.toggle('hidden', !on); }
+
+  function render(){
+    // screens
+    ['home','notif','value','profile'].forEach(t => {
+      document.getElementById('screen-' + t).classList.toggle('active', state.tab === t);
+    });
+    // nav active states
+    ['home','notif','value','profile'].forEach(t => {
+      document.getElementById('nav-' + t).classList.toggle('active', state.tab === t);
+    });
+
+    // home context
+    document.getElementById('wis-speech').textContent = speeches[state.ctx];
+    document.getElementById('home-house-label').textContent = state.house === 'mine' ? 'Casa di Andrea' : 'Casa di Maria';
+    show('card-out', state.ctx === 'out');
+    show('morning-actions', state.ctx === 'in');
+    show('morning-card', !state.chatFromSuggestion);
+
+    // emergency
+    const ch = state.emChoice;
+    show('em-step-initial', !ch);
+    show('em-ask', !ch);
+    show('em-called', ch === 'call');
+    show('em-dismissed', ch === 'ok');
+    document.getElementById('emergency-card').classList.toggle('is-resolved', ch === 'call');
+    show('attenzione-subito-block', !state.deliveryResolved);
+    show('delivery-done-card', state.deliveryResolved);
+    show('laundry-card', state.deliveryResolved && state.chatFromSuggestion);
+    show('suggestion-chip', state.deliveryResolved);
+
+    // houses
+    document.getElementById('house-mine').classList.toggle('active', state.house === 'mine');
+    document.getElementById('house-maria').classList.toggle('active', state.house === 'maria');
+    document.getElementById('house-mine-tag').style.visibility = state.house === 'mine' ? 'visible' : 'hidden';
+    document.getElementById('house-maria-tag').style.visibility = state.house === 'maria' ? 'visible' : 'hidden';
+
+    // autonomy
+    ['base','bilanciato','avanzato'].forEach(k => {
+      document.getElementById('autonomy-' + k).classList.toggle('active', state.autonomy === k);
+    });
+    const AUTONOMY_INFO = {
+      base: { label:'Livello Base', items:['Ti avviso, tu decidi ogni volta','Nessuna automazione attiva senza conferma','Massimo controllo su ogni azione'] },
+      bilanciato: { label:'Livello Bilanciato', items:['Suggerimenti personalizzati','Automazioni quotidiane controllabili','Possibilità di intervenire in ogni momento'] },
+      avanzato: { label:'Livello Avanzato', items:['Automazioni complete su comfort e consumi','Interventi di sicurezza immediati','Riepiloghi periodici, non richieste continue'] },
+    };
+    const info = AUTONOMY_INFO[state.autonomy];
+    document.getElementById('autonomy-badge').textContent = info.label;
+    document.getElementById('autonomy-list').innerHTML = info.items.map(t => `<div class="autonomy-preview-item"><iconify-icon icon="solar:check-circle-bold" width="12" height="12"></iconify-icon><span>${t}</span></div>`).join('');
+  }
+
+  render();
+  setTimeout(() => {
+    const bubble = document.getElementById('home-speech-bubble');
+    if (bubble) bubble.textContent = 'Come posso aiutarti?';
+  }, 2000);
+</script>
+</body>
+</html>
